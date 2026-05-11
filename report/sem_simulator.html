@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEM Simulator</title>
+    <style>
+        :root {
+            --bg-color: #1a1a24;
+            --panel-bg: #252530;
+            --text-color: #e0e0e0;
+            --accent: #00d2ff;
+            --danger: #ff4b4b;
+            --safe: #00e676;
+            --formula-bg: #111118;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .header { text-align: center; margin-bottom: 20px; }
+        .container { display: flex; flex-wrap: wrap; gap: 20px; width: 100%; max-width: 1050px; }
+        .panel {
+            background-color: var(--panel-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+            flex: 1;
+            min-width: 350px;
+        }
+        .controls { display: flex; flex-direction: column; gap: 15px; }
+        .control-group label { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 8px;}
+        input[type="range"] { width: 100%; accent-color: var(--accent); }
+        
+        .metrics {
+            margin-top: 10px; padding: 15px; background: rgba(0,0,0,0.4);
+            border-radius: 8px; border-left: 4px solid var(--accent);
+        }
+        .metrics div { margin: 8px 0; font-size: 1.05em; }
+        
+        .visuals { display: flex; flex-direction: column; gap: 20px; align-items: center; }
+        canvas { background-color: #000; border-radius: 8px; border: 1px solid #444; width: 100%; max-width: 400px; }
+        .canvas-title { text-align: center; margin-bottom: 8px; font-size: 0.9em; color: #aaa; }
+        
+        /* Formula Box Layout */
+        .formula-box {
+            background-color: var(--formula-bg);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #ffcc00;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.95em;
+            width: 100%;
+            box-sizing: border-box;
+            line-height: 1.5;
+        }
+        .formula-box .math { color: #ffcc00; font-weight: bold; font-size: 1.1em; margin: 5px 0;}
+
+        /* References Box Layout */
+        .references {
+            background-color: var(--panel-bg);
+            padding: 20px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 1050px;
+            margin-top: 20px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+            border-left: 4px solid var(--safe);
+            box-sizing: border-box;
+        }
+        .references h3 { margin-top: 0; color: var(--safe); }
+        .references ul { margin: 0; padding-left: 20px; }
+        .references li { margin-bottom: 10px; line-height: 1.5; color: #ccc; }
+        .references strong { color: #fff; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>🔬 SEM Simulator</h1>
+    </div>
+
+    <div class="container">
+        <div class="panel controls">
+            <h3>🎛️ Parameters</h3>
+            
+            <div class="control-group">
+                <label><span>Acceleration Voltage (V<sub>acc</sub>)</span> <span id="vacc-val">2.0 kV</span></label>
+                <input type="range" id="vacc" min="0.5" max="3.0" step="0.1" value="2.0">
+            </div>
+
+            <div class="control-group">
+                <label><span>Retarding Bias (V<sub>bias</sub>)</span> <span id="vbias-val">1700 V</span></label>
+                <input type="range" id="vbias" min="0" max="2900" step="50" value="1700">
+            </div>
+
+            <div class="control-group">
+                <label><span>Probe Current</span> <span id="iprobe-val">20 pA</span></label>
+                <input type="range" id="iprobe" min="5" max="50" step="1" value="20">
+            </div>
+
+            <div class="metrics">
+                <div>Landing Energy (E_L): <strong id="el-out" style="color: var(--accent);">300 eV</strong></div>
+                <div>SE Yield (δ): <strong id="yield-out">100%</strong></div>
+                <div id="charging-out">Edge Effect Charging: <strong style="color: var(--safe);">Stable (0%)</strong></div>
+            </div>
+
+            <div class="formula-box" style="margin-top: 20px;">
+                <div>[Secondary Electron Yield]</div>
+                <div class="math">δ(x) = δ_max · 1.11x⁻⁰·³⁵(1 - e⁻²·³*x^¹·³⁵)</div>
+                <div style="color: #aaa; margin-top: 5px; font-size: 0.9em;">
+                    * x = E<sub>L</sub> / 300 eV (Normalized Energy)<br>
+                    * E<sub>L</sub> (Landing Energy) = V<sub>acc</sub> - V<sub>bias</sub><br>
+                    * Peak yield (δ<sub>max</sub>) occurs at 300eV
+                </div>
+            </div>
+        </div>
+
+        <div class="panel visuals">
+            <div style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+                <div class="canvas-title">SEM Image (Symmetric Edge Blooming)</div>
+                <canvas id="semImage" width="400" height="300"></canvas>
+            </div>
+            <div style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+                <div class="canvas-title">SE Waveform (Peak Broadening & Wash-out)</div>
+                <canvas id="waveform" width="400" height="150"></canvas>
+            </div>
+            
+            <div class="formula-box" style="margin-top: 20px;">
+                <div>[Beam-Induced Shrinkage]</div>
+                <div class="math">CD(n) = C + A · exp(-γ · n) - A + B · n</div>
+                <div style="color: #aaa; margin-top: 5px; font-size: 0.9em;">
+                    * n: Measurements (Cumulative Dose)<br>
+                    * C: Initial CD (Linewidth before exposure)<br>
+                    * A: Shrink Amplitude (Depends on Grun Range, R<sub>G</sub>)<br>
+                    * γ: Decay Rate (Shrinkage speed)<br>
+                    * B: Contamination Growth Rate (Carbon buildup)
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="references">
+        <h3>📚 References</h3>
+        <ul>
+            <li><strong>SE Yield Curve and Ultra-Low Voltage (ULV) Landing Energy Effects:</strong><br>
+                <i>"Landing energy influence on CD-SEM measurement precision and accuracy"</i>, A.-L. Fabre et al., Proc. SPIE 6152 (2006).</li>
+            <li><strong>Photoresist Beam-Induced Shrinkage and Top Rounding:</strong><br>
+                <i>"Photoresist cross-sectional shape change caused by scanning electron microscope-induced shrinkage"</i>, T. Ohashi et al., J. Micro/Nanolith. MEMS MOEMS 14(3) (2015).</li>
+            <li><strong>Classical Shrinkage Model and CD Size Effect:</strong><br>
+                <i>"Characterization of CD-SEM Metrology for iArF Photoresist Materials"</i>, B. Bunday et al., Proc. SPIE 6922 (2008).</li>
+        </ul>
+    </div>
+
+    <script>
+        const vaccInput = document.getElementById('vacc');
+        const vbiasInput = document.getElementById('vbias');
+        const iprobeInput = document.getElementById('iprobe');
+        const vaccVal = document.getElementById('vacc-val');
+        const vbiasVal = document.getElementById('vbias-val');
+        const iprobeVal = document.getElementById('iprobe-val');
+        const elOut = document.getElementById('el-out');
+        const yieldOut = document.getElementById('yield-out');
+        const chargingOut = document.getElementById('charging-out');
+
+        const canvasImg = document.getElementById('semImage');
+        const ctxImg = canvasImg.getContext('2d');
+        const canvasWave = document.getElementById('waveform');
+        const ctxWave = canvasWave.getContext('2d');
+
+        function updateSimulation() {
+            let vacc = parseFloat(vaccInput.value);
+            let vbias = parseFloat(vbiasInput.value);
+            let iprobe = parseFloat(iprobeInput.value);
+
+            if (vbias >= vacc * 1000) {
+                vbias = vacc * 1000 - 100;
+                vbiasInput.value = vbias;
+            }
+
+            vaccVal.innerText = vacc.toFixed(1) + " kV";
+            vbiasVal.innerText = vbias + " V";
+            iprobeVal.innerText = iprobe + " pA";
+
+            let EL = (vacc * 1000) - vbias;
+            
+            let x = EL / 300.0;
+            let seYield = 0;
+            if (x > 0) {
+                seYield = 1.11 * Math.pow(x, -0.35) * (1 - Math.exp(-2.3 * Math.pow(x, 1.35)));
+            }
+            seYield = Math.max(0, Math.min(1, seYield));
+
+            let charging = 0;
+            if (EL > 350) charging = Math.min(1.0, Math.pow((EL - 350) / 300, 1.5));
+            charging = Math.min(1.0, charging * (1 + (iprobe - 20) * 0.02)); 
+
+            let noiseLevel = 150 / iprobe; 
+            let blurLevel = 2.0 / vacc;    
+
+            elOut.innerText = EL.toFixed(0) + " eV";
+            yieldOut.innerText = (seYield * 100).toFixed(1) + "%";
+            
+            if (charging > 0.05) {
+                chargingOut.innerHTML = `Edge Effect Charging: <strong style="color: var(--danger);">${(charging*100).toFixed(0)}% (Edge Wash-out)</strong>`;
+            } else {
+                chargingOut.innerHTML = `Edge Effect Charging: <strong style="color: var(--safe);">Stable (0%)</strong>`;
+            }
+
+            drawSEMImage(seYield, charging, noiseLevel, blurLevel);
+            drawWaveform(seYield, charging, noiseLevel);
+        }
+
+        function drawSEMImage(seYield, charging, noiseLevel, blurLevel) {
+            ctxImg.clearRect(0, 0, canvasImg.width, canvasImg.height);
+            
+            let baseGray = Math.floor(40 * seYield);
+            ctxImg.fillStyle = `rgb(${baseGray}, ${baseGray}, ${baseGray})`;
+            ctxImg.fillRect(0, 0, canvasImg.width, canvasImg.height);
+
+            ctxImg.filter = `blur(${blurLevel}px)`;
+            
+            let lineGray = Math.floor(100 * seYield);
+            ctxImg.fillStyle = `rgb(${lineGray}, ${lineGray}, ${lineGray})`;
+            ctxImg.fillRect(160, 0, 80, canvasImg.height);
+
+            let edgeGray = Math.floor(255 * seYield);
+            ctxImg.fillStyle = `rgb(${edgeGray}, ${edgeGray}, ${edgeGray})`;
+            ctxImg.fillRect(155, 0, 10, canvasImg.height);
+            ctxImg.fillRect(235, 0, 10, canvasImg.height);
+            
+            if (charging > 0) {
+                let bloomWidth = 60 * charging; 
+                
+                let gradL = ctxImg.createLinearGradient(160 - bloomWidth, 0, 160 + bloomWidth, 0);
+                gradL.addColorStop(0, `rgba(255, 255, 255, 0)`);
+                gradL.addColorStop(0.5, `rgba(255, 255, 255, ${charging * 0.9})`);
+                gradL.addColorStop(1, `rgba(255, 255, 255, 0)`);
+                ctxImg.fillStyle = gradL;
+                ctxImg.fillRect(160 - bloomWidth, 0, bloomWidth * 2, canvasImg.height);
+
+                let gradR = ctxImg.createLinearGradient(240 - bloomWidth, 0, 240 + bloomWidth, 0);
+                gradR.addColorStop(0, `rgba(255, 255, 255, 0)`);
+                gradR.addColorStop(0.5, `rgba(255, 255, 255, ${charging * 0.9})`);
+                gradR.addColorStop(1, `rgba(255, 255, 255, 0)`);
+                ctxImg.fillStyle = gradR;
+                ctxImg.fillRect(240 - bloomWidth, 0, bloomWidth * 2, canvasImg.height);
+            }
+            
+            ctxImg.filter = 'none';
+
+            let imgData = ctxImg.getImageData(0, 0, canvasImg.width, canvasImg.height);
+            let pixels = imgData.data;
+            for (let i = 0; i < pixels.length; i += 4) {
+                let noise = (Math.random() - 0.5) * noiseLevel * 2;
+                pixels[i] = Math.min(255, Math.max(0, pixels[i] + noise));
+                pixels[i+1] = Math.min(255, Math.max(0, pixels[i+1] + noise));
+                pixels[i+2] = Math.min(255, Math.max(0, pixels[i+2] + noise));
+            }
+            ctxImg.putImageData(imgData, 0, 0);
+        }
+
+        function drawWaveform(seYield, charging, noiseLevel) {
+            ctxWave.clearRect(0, 0, canvasWave.width, canvasWave.height);
+            
+            ctxWave.strokeStyle = '#444';
+            ctxWave.lineWidth = 1;
+            ctxWave.beginPath();
+            for(let i=0; i<150; i+=25) { ctxWave.moveTo(0, i); ctxWave.lineTo(400, i); }
+            ctxWave.stroke();
+
+            let baseHeight = 120; 
+            let peakHeight = 100 * seYield; 
+
+            ctxWave.strokeStyle = '#00d2ff';
+            ctxWave.lineWidth = 2;
+            ctxWave.beginPath();
+
+            let peakSpread = 80 + (300 * charging);
+
+            for (let x = 0; x < canvasWave.width; x++) {
+                let y = baseHeight;
+                
+                let currentPeakHeight = peakHeight + (80 * charging);
+                let edge1 = currentPeakHeight * Math.exp(-Math.pow(x - 160, 2) / peakSpread);
+                let edge2 = currentPeakHeight * Math.exp(-Math.pow(x - 240, 2) / peakSpread);
+                
+                let inside = (x > 160 && x < 240) ? (15 * seYield) : 0;
+                
+                let valleyFill = charging * 60 * Math.exp(-Math.pow(x - 200, 2) / 8000);
+                
+                y = y - edge1 - edge2 - inside - valleyFill;
+                y += (Math.random() - 0.5) * (noiseLevel * 0.4);
+
+                if (x === 0) ctxWave.moveTo(x, y);
+                else ctxWave.lineTo(x, y);
+            }
+            ctxWave.stroke();
+        }
+
+        vaccInput.addEventListener('input', updateSimulation);
+        vbiasInput.addEventListener('input', updateSimulation);
+        iprobeInput.addEventListener('input', updateSimulation);
+
+        updateSimulation();
+    </script>
+</body>
+</html>

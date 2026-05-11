@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARTIMAGEN Engine Simulator (Python Backend)</title>
+    <style>
+        :root {
+            --bg-color: #0f111a;
+            --panel-bg: #1a1d2d;
+            --text-color: #e2e8f0;
+            --accent: #10b981;
+            --accent-glow: rgba(16, 185, 129, 0.4);
+            --danger: #ef4444;
+            --safe: #3b82f6;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .header { text-align: center; margin-bottom: 20px; }
+        .container { display: flex; gap: 20px; width: 100%; max-width: 1000px; }
+        .panel {
+            background-color: var(--panel-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+            flex: 1;
+        }
+        .controls { display: flex; flex-direction: column; gap: 15px; }
+        .control-group label { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 8px;}
+        input[type="range"] { width: 100%; accent-color: var(--accent); }
+        .metrics {
+            margin-top: 10px; padding: 15px; background: rgba(0,0,0,0.4);
+            border-radius: 8px; border-left: 4px solid var(--accent);
+        }
+        .metrics div { margin: 8px 0; font-size: 1.05em; font-family: monospace; }
+        .visuals { display: flex; flex-direction: column; gap: 20px; align-items: center; position: relative; }
+        canvas, img.render-output { background-color: #000; border-radius: 8px; border: 1px solid #444; width: 400px; height: 300px; object-fit: contain; }
+        .canvas-title { text-align: center; margin-bottom: 8px; font-size: 0.9em; color: #aaa; }
+        .btn {
+            background: transparent; color: var(--accent); border: 1px solid var(--accent);
+            padding: 5px 15px; border-radius: 20px; cursor: pointer; font-family: monospace;
+            transition: all 0.3s;
+        }
+        .btn:hover { background: var(--accent); color: #000; box-shadow: 0 0 15px var(--accent-glow); }
+        .loading {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--accent);
+            font-weight: bold;
+            display: none;
+            text-shadow: 0 0 5px #000;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>🔬 ARTIMAGEN Python Backend Engine</h1>
+        <button class="btn" onclick="location.href='sem_simulator.html'">Compare with Antigravity</button>
+        <p style="color: #aaa; font-size: 0.9em;">"Python(OpenCV)을 백엔드로 사용하여 실제 이미지의 픽셀 물리 현상을 실시간 연산"</p>
+    </div>
+
+    <div class="container">
+        <div class="panel controls">
+            <h3>🎛️ ARTIMAGEN Parameters</h3>
+            
+            <div class="control-group">
+                <label>가속 전압 (Vacc) <span id="vacc-val">2.0 kV</span></label>
+                <input type="range" id="vacc" min="0.1" max="15.0" step="0.1" value="2.0">
+            </div>
+
+            <div class="control-group">
+                <label>빔 전류 (Probe Current) <span id="iprobe-val">10 pA</span></label>
+                <input type="range" id="iprobe" min="1" max="100" step="1" value="10">
+            </div>
+
+            <div class="control-group">
+                <label>스테이지/빔 드리프트 (Drift) <span id="drift-val">0.0 nm/s</span></label>
+                <input type="range" id="drift" min="0" max="5.0" step="0.1" value="0.0">
+            </div>
+
+            <div class="metrics">
+                <div>서버 상태: <strong id="server-status" style="color: var(--danger);">확인 중...</strong></div>
+                <div>연산 속도 (Latency): <strong id="latency-out">0 ms</strong></div>
+                <div id="status-out">물리 상태: <strong style="color: var(--safe);">안정적 측정 가능</strong></div>
+            </div>
+        </div>
+
+        <div class="panel visuals">
+            <div>
+                <div class="canvas-title">OpenCV Processed SEM Image</div>
+                <div style="position: relative;">
+                    <img id="semImage" class="render-output" src="../images/sem_line_width_1778403346454.png" alt="SEM Output">
+                    <div id="loading-indicator" class="loading">Processing...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const vaccInput = document.getElementById('vacc');
+        const iprobeInput = document.getElementById('iprobe');
+        const driftInput = document.getElementById('drift');
+        
+        const vaccVal = document.getElementById('vacc-val');
+        const iprobeVal = document.getElementById('iprobe-val');
+        const driftVal = document.getElementById('drift-val');
+        
+        const serverStatus = document.getElementById('server-status');
+        const latencyOut = document.getElementById('latency-out');
+        const statusOut = document.getElementById('status-out');
+        const loadingIndicator = document.getElementById('loading-indicator');
+
+        const outputImg = document.getElementById('semImage');
+
+        // 슬라이더 이동 시 너무 많은 요청을 보내지 않도록 디바운싱(Debouncing) 적용
+        let timeout = null;
+
+        function updateUI() {
+            let vacc = parseFloat(vaccInput.value);
+            let iprobe = parseFloat(iprobeInput.value);
+            let drift = parseFloat(driftInput.value);
+
+            vaccVal.innerText = vacc.toFixed(1) + " kV";
+            iprobeVal.innerText = iprobe + " pA";
+            driftVal.innerText = drift.toFixed(1) + " nm/s";
+
+            let charging = (vacc > 3.0) ? ((vacc - 3.0) / 12.0) * (iprobe / 100) : 0;
+
+            if (charging > 0.2) {
+                statusOut.innerHTML = `상태: <strong style="color: var(--danger);">차징 (Charging Artifacts)</strong>`;
+            } else if (drift > 1.0) {
+                statusOut.innerHTML = `상태: <strong style="color: var(--danger);">스캔 왜곡 (Drift Distortion)</strong>`;
+            } else {
+                statusOut.innerHTML = `상태: <strong style="color: var(--safe);">정상 스캔</strong>`;
+            }
+
+            clearTimeout(timeout);
+            timeout = setTimeout(fetchImageFromServer, 50); // 50ms 대기 후 서버 요청
+        }
+
+        async function fetchImageFromServer() {
+            let vacc = vaccInput.value;
+            let iprobe = iprobeInput.value;
+            let drift = driftInput.value;
+
+            let formData = new FormData();
+            formData.append('vacc', vacc);
+            formData.append('iprobe', iprobe);
+            formData.append('drift', drift);
+
+            loadingIndicator.style.display = 'block';
+            let startTime = performance.now();
+
+            try {
+                const response = await fetch('http://127.0.0.1:8000/process_image', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const objectURL = URL.createObjectURL(blob);
+                    outputImg.onload = () => { URL.revokeObjectURL(objectURL); };
+                    outputImg.src = objectURL;
+
+                    let endTime = performance.now();
+                    latencyOut.innerText = Math.round(endTime - startTime) + " ms";
+                    serverStatus.innerHTML = '<span style="color:var(--safe)">Online (FastAPI)</span>';
+                } else {
+                    serverStatus.innerHTML = '<span style="color:var(--danger)">Error (서버 처리 실패)</span>';
+                }
+            } catch (error) {
+                console.error("서버에 연결할 수 없습니다. Python 백엔드가 실행 중인지 확인하세요.", error);
+                serverStatus.innerHTML = '<span style="color:var(--danger)">Offline (서버 미연결)</span>';
+            } finally {
+                loadingIndicator.style.display = 'none';
+            }
+        }
+
+        vaccInput.addEventListener('input', updateUI);
+        iprobeInput.addEventListener('input', updateUI);
+        driftInput.addEventListener('input', updateUI);
+
+        updateUI(); // 초기 요청 실행
+    </script>
+</body>
+</html>
