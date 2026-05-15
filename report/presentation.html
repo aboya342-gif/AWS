@@ -25,7 +25,6 @@
             overflow: hidden;
         }
 
-        /* --- Presentation Structure --- */
         .presentation-container {
             width: 100%;
             height: 100%;
@@ -65,7 +64,6 @@
             transform: translateX(100%);
         }
 
-        /* --- Visual Elements --- */
         h1 {
             font-size: 3.5rem;
             margin-bottom: 0.5rem;
@@ -152,7 +150,6 @@
             font-weight: bold;
         }
 
-        /* --- Image Styles --- */
         .slide-img {
             width: 80%;
             margin: 0 auto;
@@ -162,83 +159,6 @@
             box-shadow: 0 10px 30px rgba(0, 210, 255, 0.2);
         }
 
-        /* --- Mini Simulator Mockup --- */
-        .mockup-container {
-            width: 100%;
-            height: 220px;
-            background: #151518;
-            border-radius: 12px;
-            border: 1px solid #333;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-
-        .mockup-header {
-            height: 20px;
-            background: #1c1c21;
-            border-bottom: 1px solid #333;
-            display: flex;
-            align-items: center;
-            padding: 0 10px;
-            gap: 5px;
-        }
-
-        .mockup-dot { width: 6px; height: 6px; border-radius: 50%; }
-
-        .mockup-main {
-            display: flex;
-            flex: 1;
-        }
-
-        .mockup-sidebar {
-            width: 60px;
-            border-right: 1px solid #333;
-            background: #151518;
-            padding: 10px 5px;
-        }
-
-        .mockup-line { width: 100%; height: 4px; background: #333; margin-bottom: 5px; border-radius: 2px; }
-
-        .mockup-content {
-            flex: 1;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .mockup-canvas {
-            background: #000;
-            border: 1px solid #222;
-            flex: 1;
-            border-radius: 4px;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .mockup-waveform {
-            height: 40px;
-            background: #000;
-            border: 1px solid #222;
-            border-radius: 4px;
-            position: relative;
-        }
-
-        .mockup-wave-line {
-            position: absolute;
-            top: 50%;
-            left: 0;
-            width: 100%;
-            height: 1px;
-            background: var(--primary);
-            box-shadow: 0 0 5px var(--primary);
-        }
-
-        /* --- Navigation --- */
         .nav-controls {
             position: fixed;
             bottom: 30px;
@@ -276,7 +196,6 @@
             z-index: 1001;
         }
 
-        /* --- Animations --- */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
@@ -295,10 +214,6 @@
         
         <!-- Slide 0: Title -->
         <div class="slide active" id="slide-0">
-            <div style="position: absolute; top: 40px; right: 60px;">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/9/93/Amazon_Web_Services_Logo.svg" style="width: 80px; filter: brightness(0) invert(1); opacity: 0.8;" alt="AWS Logo">
-            </div>
-            
             <h1 class="animate-fade" style="margin-top: 50px;">CD-SEM Expert Simulator</h1>
             <p class="animate-fade" style="letter-spacing: 4px; color: var(--primary); margin-bottom: 40px;">PROFESSIONAL EDUCATION SOLUTION</p>
             
@@ -326,20 +241,12 @@
                             <li>장비 고장 리스크로 인한 실습 기회 제한</li>
                         </ul>
                     </div>
-                    <div class="card">
-                        <h3 style="color: #fff;">2. 복잡한 물리적 왜곡 현상</h3>
-                        <ul class="feature-list">
-                            <li>소재별(PR, Si) 상이한 전자빔 상호작용</li>
-                            <li>Shrinkage, Charging 등 비가시적 오차 이해의 난해함</li>
-                        </ul>
-                    </div>
                 </div>
                 <div style="display: flex; flex-direction: column; align-items: center;">
                     <div style="background: white; padding: 15px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
                         <img src="assets/sem_cost.png" style="width: 100%; display: block;" alt="SEM Cost Table">
                     </div>
                     <p style="font-size: 0.8rem; margin-top: 15px; color: #888; margin-bottom: 5px;">[실제 CD-SEM 장비 사용료 단가 예시]</p>
-                    <p style="font-size: 0.65rem; color: #666; margin: 0;">출처: 서울대학교 반도체공동연구소</p>
                 </div>
             </div>
         </div>
@@ -347,136 +254,27 @@
         <!-- Slide 2: Vibe-Spec Development Flow -->
         <div class="slide" id="slide-2">
             <h2>Vibe-Spec 개발 흐름</h2>
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%; max-width: 1200px; gap: 20px; margin-top: 20px;">
-                <!-- Step 1 -->
-                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center;">
-                    <div style="width: 100px; height: 100px; background: rgba(0,210,255,0.05); border: 1px solid var(--border); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: 0 0 20px rgba(0,210,255,0.1);">
-                        <img src="assets/dev_flow_1.png" style="width: 70%;" alt="Step 1">
-                    </div>
-                    <div style="font-size: 0.8rem; color: var(--primary); font-weight: bold; margin-bottom: 5px;">STEP 01</div>
-                    <div style="font-size: 1.1rem; color: #fff; font-weight: 500; line-height: 1.3;">논문 탐색 및 선정</div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%; max-width: 1200px; gap: 20px;">
+                <div style="flex: 1; text-align: center;">
+                    <img src="assets/dev_flow_1.png" style="width: 100px; margin-bottom: 10px;">
+                    <div style="color: #fff;">논문 탐색 및 선정</div>
                 </div>
-                
-                <div style="margin-top: 45px; color: #444; font-size: 1.5rem;">→</div>
-
-                <!-- Step 2 -->
-                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center;">
-                    <div style="width: 100px; height: 100px; background: rgba(0,210,255,0.05); border: 1px solid var(--border); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: 0 0 20px rgba(0,210,255,0.1);">
-                        <img src="assets/dev_flow_2.png" style="width: 70%;" alt="Step 2">
-                    </div>
-                    <div style="font-size: 0.8rem; color: var(--primary); font-weight: bold; margin-bottom: 5px;">STEP 02</div>
-                    <div style="font-size: 1.1rem; color: #fff; font-weight: 500; line-height: 1.3;">구글 딥리서치<br>데이터 크롤링</div>
+                <div style="flex: 1; text-align: center;">
+                    <img src="assets/dev_flow_2.png" style="width: 100px; margin-bottom: 10px;">
+                    <div style="color: #fff;">구글 딥리서치 데이터 크롤링</div>
                 </div>
-
-                <div style="margin-top: 45px; color: #444; font-size: 1.5rem;">→</div>
-
-                <!-- Step 3 -->
-                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center;">
-                    <div style="width: 100px; height: 100px; background: rgba(0,210,255,0.05); border: 1px solid var(--border); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: 0 0 20px rgba(0,210,255,0.1);">
-                        <img src="assets/dev_flow_3.png" style="width: 70%;" alt="Step 3">
-                    </div>
-                    <div style="font-size: 0.8rem; color: var(--primary); font-weight: bold; margin-bottom: 5px;">STEP 03</div>
-                    <div style="font-size: 1.1rem; color: #fff; font-weight: 500; line-height: 1.3;">LLM 학습</div>
+                <div style="flex: 1; text-align: center;">
+                    <img src="assets/dev_flow_3.png" style="width: 100px; margin-bottom: 10px;">
+                    <div style="color: #fff;">LLM 학습</div>
                 </div>
-
-                <div style="margin-top: 45px; color: #444; font-size: 1.5rem;">→</div>
-
-                <!-- Step 4 -->
-                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center;">
-                    <div style="width: 100px; height: 100px; background: rgba(0,210,255,0.05); border: 1px solid var(--border); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: 0 0 20px rgba(0,210,255,0.1);">
-                        <img src="assets/dev_flow_4.png" style="width: 70%;" alt="Step 4">
-                    </div>
-                    <div style="font-size: 0.8rem; color: var(--primary); font-weight: bold; margin-bottom: 5px;">STEP 04</div>
-                    <div style="font-size: 1.1rem; color: #fff; font-weight: 500; line-height: 1.3;">Antigravity를 통한<br>Vibe Coding</div>
+                <div style="flex: 1; text-align: center;">
+                    <img src="assets/dev_flow_4.png" style="width: 100px; margin-bottom: 10px;">
+                    <div style="color: #fff;">Antigravity 코딩</div>
                 </div>
-
-                <div style="margin-top: 45px; color: #444; font-size: 1.5rem;">→</div>
-
-                <!-- Step 5 -->
-                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center;">
-                    <div style="width: 100px; height: 100px; background: rgba(0,210,255,0.05); border: 1px solid var(--border); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: 0 0 20px rgba(0,210,255,0.1);">
-                        <img src="assets/dev_flow_5.png" style="width: 70%;" alt="Step 5">
-                    </div>
-                    <div style="font-size: 0.8rem; color: var(--primary); font-weight: bold; margin-bottom: 5px;">STEP 05</div>
-                    <div style="font-size: 1.1rem; color: #fff; font-weight: 500; line-height: 1.3;">Github을 통한 배포</div>
+                <div style="flex: 1; text-align: center;">
+                    <img src="assets/dev_flow_5.png" style="width: 100px; margin-bottom: 10px;">
+                    <div style="color: #fff;">GitHub 배포</div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Slide 3: Data Collection -->
-        <div class="slide" id="slide-3">
-            <h2>데이터 수집 및 연구 (Research)</h2>
-            <div class="content-grid" style="grid-template-columns: 1.2fr 0.8fr; gap: 30px; max-width: 1100px;">
-                <div style="text-align: left;">
-                    <h3 class="highlight">AI 기반 딥 리서치 및 논문 분석</h3>
-                    <p style="text-align: left; margin-bottom: 20px; font-size: 1.1rem;">실제 물리 법칙을 이식하기 위해 <span class="highlight">Google Deep Research</span>를 활용하여 전 세계 60개 이상의 전문 소스를 분석했습니다.</p>
-                    <ul class="feature-list" style="font-size: 1rem;">
-                        <li>SPIE, NIST, Hitachi 등 글로벌 논문 데이터 학습</li>
-                        <li>Landing Energy 수식 및 전자 파형 모델링 구현</li>
-                        <li>저널 학술적 근거에 기반한 시뮬레이션 로직 구축</li>
-                    </ul>
-                </div>
-                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                    <img src="assets/research_diagram.png" class="slide-img" style="width: 100%;" alt="Research Diagram">
-                    <p style="font-size: 0.8rem; margin-top: 10px; color: #666;">[AI 기반 연구 및 데이터 수집 프로세스 시각화]</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Slide 4: Implementation Completeness -->
-        <div class="slide" id="slide-4">
-            <h2>구현 완성도 (Implementation)</h2>
-            <div class="content-grid" style="grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; max-width: 1100px;">
-                <div class="card">
-                    <h3 class="highlight">정밀 물리 엔진 & Real-time UI</h3>
-                    <ul class="feature-list" style="font-size: 1rem;">
-                        <li><span class="highlight">Landing Energy 모델:</span> E<sub>landing</sub> 수식 엔진 탑재</li>
-                        <li><span class="highlight">소재별 특화 로직:</span> PR 수축 & Si 산란 효과 반영</li>
-                        <li><span class="highlight">Waveform 분석:</span> 실시간 프로파일링 및 CD 산출</li>
-                        <li><span class="highlight">진단 도구:</span> 오차 시각화 및 리포트 자동 생성</li>
-                    </ul>
-                    <p style="text-align: left; font-size: 0.85rem; margin-top: 20px; color: #888; border-top: 1px solid #333; padding-top: 15px;">
-                        * 실제 장비의 계측 알고리즘을 웹 환경에서 99% 재현
-                    </p>
-                </div>
-                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                    <div style="background: #111; padding: 10px; border-radius: 15px; border: 1px solid var(--border); box-shadow: 0 0 40px rgba(0, 210, 255, 0.15); width: 100%; box-sizing: border-box;">
-                        <img src="assets/simulation_screenshot.png" style="width: 100%; border-radius: 8px; display: block;" alt="Real Simulation Screenshot">
-                    </div>
-                    <p style="font-size: 0.75rem; margin-top: 12px; color: #666; font-weight: 500; letter-spacing: 0.5px;">
-                        [시뮬레이터 실제 구동 결과 - SEM Image & Waveform]
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Slide 5: Practicality -->
-        <div class="slide" id="slide-5">
-            <h2>실용성 및 개선 방향 (Practicality & Roadmap)</h2>
-            <div class="content-grid" style="grid-template-columns: 1fr 1fr; gap: 20px;">
-                <div class="card">
-                    <h3 style="color: var(--primary);">학습 효율 극대화</h3>
-                    <p style="text-align: left; font-size: 1rem; color: #eee; margin-bottom: 0;">장비 조작 없이도 <span class="highlight">Acceleration Voltage, Retarding Bias, Probe Current</span>의 최적 조합을 무한히 실습할 수 있어 신입 엔지니어의 교육 기간을 획기적으로 단축합니다.</p>
-                </div>
-                <div class="card">
-                    <h3 style="color: var(--primary);">데이터 기반 의사결정</h3>
-                    <p style="text-align: left; font-size: 1rem; color: #eee; margin-bottom: 0;">리포트 생성 기능을 통해 측정 오류를 미리 진단하고 공정 윈도우를 최적화하는 전략을 학습합니다.</p>
-                </div>
-            </div>
-            <div class="card" style="margin-top: 30px; border-color: #444; background: rgba(255, 255, 255, 0.02); width: 100%; max-width: 1100px; text-align: left;">
-                <h3 style="color: #ffbd2e; font-size: 1.1rem; margin-bottom: 15px;">⚠️ 한계 및 개선점 (Future Roadmap)</h3>
-                <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px;">
-                    <li style="font-size: 1.05rem; color: #aaa; display: flex; align-items: center;">
-                        <span style="width: 200px;">1. 시뮬레이션 파라미터</span>
-                        <span style="color: var(--primary); margin: 0 15px; font-weight: bold;">→</span> 
-                        <span class="highlight">시간 관계상 미구현 항목 추후 보완 예정</span>
-                    </li>
-                    <li style="font-size: 1.05rem; color: #aaa; display: flex; align-items: center;">
-                        <span style="width: 200px;">2. 레포트 출력 기능 고도화</span>
-                        <span style="color: var(--primary); margin: 0 15px; font-weight: bold;">→</span> 
-                        <span class="highlight">파일 확장자 선택 및 출력 기능 구현 예정</span>
-                    </li>
-                </ul>
             </div>
         </div>
 
@@ -486,7 +284,7 @@
             <p style="color: var(--primary); font-weight: bold; margin-bottom: 30px; letter-spacing: 2px;">Next Generation Semiconductor Metrology Training</p>
             <div class="card" style="border-style: dashed; opacity: 0.8; padding: 30px 60px; text-align: center;">
                 <p style="margin-bottom: 25px; color: #fff; font-size: 1.2rem;">질의응답 및 데모 시연</p>
-                <a href="prototype1.html" target="_blank" class="nav-btn" style="text-decoration: none; display: inline-block; padding: 15px 40px; font-size: 1.1rem; background: var(--primary); color: #000; border: none;">
+                <a href="prototype2.html" class="nav-btn" style="text-decoration: none; display: inline-block; padding: 15px 40px; font-size: 1.1rem; background: var(--primary); color: #000; border: none;">
                     데모 시연 시작하기 →
                 </a>
             </div>
@@ -507,42 +305,17 @@
         function updateSlides() {
             slides.forEach((slide, index) => {
                 slide.classList.remove('active', 'prev', 'next');
-                if (index === currentSlide) {
-                    slide.classList.add('active');
-                } else if (index < currentSlide) {
-                    slide.classList.add('prev');
-                } else {
-                    slide.classList.add('next');
-                }
+                if (index === currentSlide) slide.classList.add('active');
+                else if (index < currentSlide) slide.classList.add('prev');
+                else slide.classList.add('next');
             });
-
-            // Hide/Show navigation buttons based on current slide
-            document.querySelector('.nav-btn[onclick="prevSlide()"]').style.visibility = (currentSlide === 0) ? 'hidden' : 'visible';
-            document.querySelector('.nav-btn[onclick="nextSlide()"]').style.visibility = (currentSlide === slides.length - 1) ? 'hidden' : 'visible';
-
             const progress = ((currentSlide + 1) / slides.length) * 100;
             progressBar.style.width = progress + '%';
         }
 
-        function nextSlide() {
-            if (currentSlide < slides.length - 1) {
-                currentSlide++;
-                updateSlides();
-            }
-        }
-
-        function prevSlide() {
-            if (currentSlide > 0) {
-                currentSlide--;
-                updateSlides();
-            }
-        }
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') nextSlide();
-            if (e.key === 'ArrowLeft') prevSlide();
-        });
-
+        function nextSlide() { if (currentSlide < slides.length - 1) { currentSlide++; updateSlides(); } }
+        function prevSlide() { if (currentSlide > 0) { currentSlide--; updateSlides(); } }
+        document.addEventListener('keydown', (e) => { if (e.key === 'ArrowRight' || e.key === ' ') nextSlide(); if (e.key === 'ArrowLeft') prevSlide(); });
         updateSlides();
     </script>
 </body>
