@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CD-SEM Simulator - Prototype 2 (Export Feature)</title>
+    <style>
+        :root {
+            --bg-color: #0a0a0c;
+            --panel-bg: #151518;
+            --accent: #00d2ff;
+            --error-color: #ffaa00; 
+            --text-color: #e0e0e0;
+            --border-color: #333;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .landing-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100%;
+            background: radial-gradient(circle at center, #1a1a24 0%, var(--bg-color) 100%);
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 5000;
+        }
+
+        .landing-title {
+            font-size: 4.5rem;
+            background: linear-gradient(90deg, #fff, var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            text-align: center;
+            letter-spacing: 2px;
+            text-shadow: 0 0 30px rgba(0, 210, 255, 0.3);
+        }
+
+        .landing-subtitle { font-size: 1.5rem; color: #888; margin-top: 0; margin-bottom: 50px; letter-spacing: 5px; }
+
+        .start-btn {
+            padding: 18px 50px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #000;
+            background: linear-gradient(135deg, var(--accent), #0080ff);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 210, 255, 0.3);
+        }
+
+        .start-btn:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0, 210, 255, 0.6); }
+
+        header {
+            background: rgba(21, 21, 24, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 15px 30px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+
+        h1 { margin: 0; font-size: 1.5rem; background: linear-gradient(90deg, #fff, var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px; }
+
+        .main-container { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { width: 350px; background: var(--panel-bg); border-right: 1px solid var(--border-color); padding: 15px 20px; overflow-y: auto; display: none; flex-direction: column; gap: 10px; transition: all 0.3s ease; }
+        .content-area { flex: 1; background: #000; display: flex; flex-direction: column; overflow-y: auto; padding: 20px; box-sizing: border-box; }
+
+        .tab-content { display: none; width: 100%; height: 100%; flex-direction: column; }
+        .tab-content.active { display: flex; }
+
+        .panel { background: #1c1c21; border-radius: 12px; padding: 15px; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .control-group { margin-bottom: 10px; }
+        label { display: block; font-size: 0.85rem; margin-bottom: 8px; color: #999; font-weight: 500; }
+        select { width: 100%; padding: 6px; background: #2a2a30; color: #fff; border: 1px solid #444; border-radius: 5px; outline: none; margin-bottom: 5px; font-size: 0.9rem; }
+        input[type="range"] { width: 100%; height: 6px; background: #333; border-radius: 5px; outline: none; accent-color: var(--accent); }
+        .val-display { float: right; color: var(--accent); font-family: 'JetBrains Mono', monospace; font-weight: bold; }
+
+        canvas { border-radius: 8px; box-shadow: 0 0 40px rgba(0, 210, 255, 0.1); background: #050505; }
+        .canvas-title { font-size: 0.9rem; color: #777; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; text-align: center; font-weight: bold; }
+
+        .tab-btn { padding: 8px 16px; background: transparent; border: 1px solid #444; color: #999; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s; }
+        .tab-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(0, 210, 255, 0.1); }
+
+        .diag-item { display: flex; flex-direction: column; padding: 8px 0; border-bottom: 1px solid #333; }
+        .diag-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; font-size: 0.9rem; }
+        .diag-desc { font-size: 0.75rem; color: #888; line-height: 1.3; }
+
+        .report-btn { background: linear-gradient(135deg, var(--accent), #0080ff); color: #000; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.3s; width: 100%; margin-top: 10px; }
+        .report-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0, 210, 255, 0.4); }
+        .checkbox-container { display: flex; align-items: center; gap: 8px; padding: 10px; background: rgba(0,210,255,0.05); border-radius: 6px; border: 1px solid #333; cursor: pointer; margin-top: 5px; }
+        .checkbox-container input { cursor: pointer; accent-color: var(--accent); width: 16px; height: 16px; margin: 0; }
+        .checkbox-container span { color: #fff; font-size: 0.85rem; }
+
+        .theory-card { background: rgba(255,255,255,0.03); border: 1px solid #333; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+        .theory-card h3 { color: var(--accent); border-bottom: 1px solid #444; padding-bottom: 10px; margin-top: 0; }
+
+        details { background: #1c1c21; border: 1px solid #333; border-radius: 8px; margin-bottom: 12px; overflow: hidden; }
+        summary { padding: 14px 20px; color: #fff; font-weight: bold; cursor: pointer; outline: none; list-style: none; display: flex; justify-content: space-between; align-items: center; background: #25252b; }
+        summary::after { content: '▼'; font-size: 0.8rem; color: var(--accent); transition: transform 0.3s; }
+        details[open] summary::after { transform: rotate(180deg); }
+        .details-content { padding: 15px 25px; background: #111; color: #ccc; border-top: 1px solid #333; line-height: 1.8; }
+
+        .reference-list { list-style: none; padding: 0; color: #aaa; max-width: 1000px; margin: 0 auto; }
+        .reference-list li { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #333; }
+        .reference-list li strong { color: var(--accent); font-size: 1.1rem; }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 4000; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+        .modal-content { background: #1a1a1e; width: 90%; max-width: 800px; padding: 30px; border-radius: 15px; border: 1px solid var(--accent); max-height: 90vh; overflow-y: auto; }
+    </style>
+</head>
+<body>
+
+    <div id="landing-screen" class="landing-screen">
+        <h1 class="landing-title">CD-SEM EXPERT SIMULATOR</h1>
+        <p class="landing-subtitle">PROTOTYPE 2 - EXPORT TEST</p>
+        <button class="start-btn" onclick="startSimulator()">시작하기</button>
+    </div>
+
+    <div id="app-container" style="display: none; flex-direction: column; flex: 1; width: 100%; overflow: hidden;">
+        
+        <header>
+            <h1>CD-SEM SIMULATOR <span style="font-weight: 200; font-size: 0.8em; opacity: 0.5;">v8.8 Prototype 2</span></h1>
+            <div style="display: flex; gap: 10px;">
+                <button class="tab-btn active" id="btn-theory" onclick="openTab('theoryAndReference', this)">이론</button>
+                <button class="tab-btn" id="btn-simulator" onclick="openTab('simulator', this)">시뮬레이터</button>
+                <button class="tab-btn" id="btn-reference-list" onclick="openTab('referenceList', this)">레퍼런스</button>
+            </div>
+        </header>
+
+        <div class="main-container">
+            <div class="sidebar" id="sidebar"> 
+                <div class="panel" style="padding-bottom: 15px; margin-bottom: 0;">
+                    <h3 style="margin-top: 0; font-size: 1rem; color: #fff;">Acquisition Parameters</h3>
+                    <div class="control-group">
+                        <label>측정 소재 (Material)</label>
+                        <select id="material" onchange="updateSimulation()">
+                            <option value="PR">포토레지스트 (Photoresist, 유기물)</option>
+                            <option value="Si">실리콘 (Silicon, 무기물)</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Target CD (목표 선폭) <span class="val-display" id="target-cd-val">50 nm</span></label>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <input type="range" id="target_cd" min="5" max="100" step="1" value="50" style="flex: 1;">
+                            <input type="number" id="target_cd_num" min="5" max="100" step="1" value="50" style="width: 50px; padding: 4px; border-radius: 4px; background: #333; color: white; border: 1px solid #555; outline: none; font-family: monospace; text-align: center;">
+                        </div>
+                    </div>
+                    <div class="control-group"><label>V<sub>acc</sub> (Acceleration) <span class="val-display" id="vacc-val">1.0 kV</span></label><input type="range" id="vacc" min="0.3" max="2.0" step="0.1" value="1.0"></div>
+                    <div class="control-group"><label>V<sub>bias</sub> (Retarding) <span class="val-display" id="vbias-val">500 V</span></label><input type="range" id="vbias" min="0" max="1500" step="50" value="500"></div>
+                    <div class="control-group"><label>Probe Current <span class="val-display" id="iprobe-val">10.0 pA</span></label><input type="range" id="iprobe" min="5.0" max="50.0" step="1.0" value="10.0"></div>
+                    <div class="control-group"><label>Scan Count <span class="val-display" id="scan-val">1</span></label><input type="range" id="scan" min="1" max="50" step="1" value="1"></div>
+                    <div class="control-group">
+                        <label>Magnification</label>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 0.8rem; color: #999;">Low</span>
+                            <input type="range" id="mag" min="30" max="500" step="10" value="100" style="flex: 1;">
+                            <span style="font-size: 0.8rem; color: #999;">High</span>
+                        </div>
+                    </div>
+                    <label class="checkbox-container error-toggle" id="errorToggleLabel">
+                        <input type="checkbox" id="showErrorOverlay" onchange="updateSimulation()">
+                        <span id="errorToggleText">이상적 규격 대비 오차 시각화</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="content-area" id="main-content">
+                <div id="theoryAndReference" class="tab-content theory-content active" style="padding: 0 20px;">
+                    <div class="theory-card">
+                        <h3>1. 시뮬레이션 기획 의도</h3>
+                        <p>반도체 미세 공정에서 CD-SEM 측정은 수율을 결정짓는 핵심 공정입니다.</p>
+                    </div>
+                </div>
+
+                <div id="simulator" class="tab-content" style="height: 100%; box-sizing: border-box;">
+                    <div style="display: flex; flex-direction: row; gap: 20px; height: 100%;">
+                        <div style="flex: 2.2; display: flex; flex-direction: column; gap: 15px; min-width: 0; height: 100%;">
+                            <div class="panel" style="flex: 1.5; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; padding: 15px;">
+                                <div class="canvas-title">SEM 이미지 (Top View)</div>
+                                <canvas id="semImage" width="600" height="400" style="max-width: 100%; max-height: 100%;"></canvas>
+                            </div>
+                            <div class="panel" style="flex: 1; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; padding: 15px;">
+                                <div class="canvas-title">SE Waveform Profile</div>
+                                <canvas id="waveform" width="600" height="200" style="max-width: 100%; max-height: 100%;"></canvas>
+                            </div>
+                        </div>
+                        <div class="panel" style="flex: 1; margin: 0; display: flex; flex-direction: column; overflow: hidden; padding: 20px;">
+                            <h3 style="margin-top: 0; font-size: 1.1rem; color: #fff;">Real-time Diagnostic</h3>
+                            <div id="diag-display" style="font-family: monospace; color: var(--accent); flex: 1;">
+                                <div class="diag-header">Landing Energy: <span id="el-out">500 eV</span></div>
+                                <div class="diag-header">Measured CD: <span id="cd-out">50.0 nm</span></div>
+                                <div id="cd-desc" style="font-size: 0.8rem; color: #888; margin-top: 10px;"></div>
+                            </div>
+                            <button class="report-btn" onclick="generateReport()">📋 분석 레포트 생성</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="referenceList" class="tab-content" style="padding: 0 40px;">
+                    <h2>참고 문헌</h2>
+                    <ul id="deep-research-links"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="reportModal" class="modal">
+        <div class="modal-content">
+            <h2 style="margin-top:0; color: var(--accent); border-bottom: 1px solid #333; padding-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+                Diagnostic Report Summary (P2)
+                <div style="display: flex; gap: 10px;">
+                    <button class="tab-btn" onclick="downloadReportImage()" style="background: rgba(0,210,255,0.1); border-color: var(--accent); color: var(--accent);">🖼️ JPG 저장</button>
+                    <button class="tab-btn" onclick="printReport()" style="background: rgba(255,255,255,0.05); border-color: #666; color: #fff;">📄 PDF/인쇄</button>
+                </div>
+            </h2>
+            <div id="reportData"></div>
+            <button class="report-btn" style="background:#444; color:#fff;" onclick="closeReport()">닫기</button>
+        </div>
+    </div>
+
+    <script>
+        const sourcesData = [
+            "Metrology for the next generation of semiconductor devices - PMC - NIH",
+            "Metrology Strategies For 2nm Processes - Semiconductor Engineering",
+            "Hitachi High-Tech CD-SEM Overview",
+            "NIST SEM Metrology Guidelines"
+        ];
+
+        function startSimulator() {
+            document.getElementById('landing-screen').style.display = 'none';
+            document.getElementById('app-container').style.display = 'flex';
+            openTab('theoryAndReference', document.getElementById('btn-theory'));
+            document.getElementById('deep-research-links').innerHTML = sourcesData.map(s => `<li>${s}</li>`).join('');
+        }
+
+        function openTab(tabId, btn) {
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(t => t.style.display = 'none');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).style.display = 'block';
+            if(tabId === 'simulator') {
+                document.getElementById(tabId).style.display = 'flex';
+                document.getElementById('sidebar').style.display = 'flex';
+            } else {
+                document.getElementById('sidebar').style.display = 'none';
+            }
+            if(btn) btn.classList.add('active');
+            updateSimulation(); 
+        }
+
+        const matInput = document.getElementById('material'), targetCdInput = document.getElementById('target_cd');
+        const vaccInput = document.getElementById('vacc'), vbiasInput = document.getElementById('vbias'), iprobeInput = document.getElementById('iprobe'), scanInput = document.getElementById('scan'), magInput = document.getElementById('mag');
+        const canvasImg = document.getElementById('semImage'), ctxImg = canvasImg.getContext('2d'), canvasWave = document.getElementById('waveform'), ctxWave = canvasWave.getContext('2d');
+
+        let g_error = 0, g_currentCD = 50.0, g_baselineYield = 0.5, g_visualGlow = 0, g_noiseLevel = 3, g_mag = 100, g_peakWidth = 10, g_troughRise = 0;
+        let g_lastReportImage = null;
+
+        function updateSimulation() {
+            let mat = matInput.value, targetCD = parseFloat(targetCdInput.value), vacc = parseFloat(vaccInput.value), vbias = parseFloat(vbiasInput.value);
+            let iprobe = parseFloat(iprobeInput.value), scan = parseInt(scanInput.value), mag = parseFloat(magInput.value);
+            let EL = Math.max(50, (vacc * 1000) - vbias); 
+            
+            let currentCD = targetCD;
+            if (mat === "PR") {
+                let damage = (EL-50)*0.01 + (iprobe-5)*0.1 + (scan-1)*0.2;
+                currentCD = targetCD - (damage > 0 ? damage*0.5 : 0);
+            } else {
+                currentCD = targetCD + (iprobe/10.0);
+            }
+
+            document.getElementById('el-out').innerText = EL.toFixed(0) + " eV";
+            document.getElementById('cd-out').innerText = currentCD.toFixed(1) + " nm";
+            g_currentCD = currentCD; g_mag = mag;
+
+            drawSEMImage(currentCD, targetCD, mat);
+            drawWaveform(currentCD);
+        }
+
+        function drawSEMImage(cd, targetCD, mat) {
+            ctxImg.fillStyle = '#111'; ctxImg.fillRect(0,0,600,400);
+            ctxImg.fillStyle = '#444';
+            let cdPx = cd * 5;
+            ctxImg.fillRect(300 - cdPx/2, 0, cdPx, 400);
+        }
+
+        function drawWaveform(cd) {
+            ctxWave.fillStyle = '#050505'; ctxWave.fillRect(0,0,600,200);
+            ctxWave.strokeStyle = '#00ffcc'; ctxWave.beginPath();
+            ctxWave.moveTo(0, 150); ctxWave.lineTo(300 - cd*2, 150); ctxWave.lineTo(300 - cd*2, 50); ctxWave.lineTo(300 + cd*2, 50); ctxWave.lineTo(300 + cd*2, 150); ctxWave.lineTo(600, 150);
+            ctxWave.stroke();
+        }
+
+        function generateReport() {
+            const tempCanvas = document.createElement('canvas'); tempCanvas.width = 600; tempCanvas.height = 400;
+            const tCtx = tempCanvas.getContext('2d');
+            tCtx.drawImage(canvasImg, 0, 0);
+            
+            g_lastReportImage = tempCanvas.toDataURL('image/jpeg', 0.9);
+            document.getElementById('reportData').innerHTML = `
+                <div id="printableReport" style="color: white; font-family: sans-serif;">
+                    <h3>SEM Analysis Summary</h3>
+                    <p>Measured CD: ${g_currentCD.toFixed(1)} nm</p>
+                    <img src="${g_lastReportImage}" style="width: 100%; border: 1px solid #333;">
+                </div>
+            `;
+            document.getElementById('reportModal').style.display = 'flex';
+        }
+
+        function downloadReportImage() {
+            if (!g_lastReportImage) return;
+            const link = document.createElement('a');
+            link.href = g_lastReportImage;
+            link.download = `SEM_Report_P2.jpg`;
+            link.click();
+        }
+
+        function printReport() { window.print(); }
+        function closeReport() { document.getElementById('reportModal').style.display = 'none'; }
+        
+        [matInput, targetCdInput, vaccInput, vbiasInput, iprobeInput, scanInput, magInput].forEach(i => i.addEventListener('input', updateSimulation));
+    </script>
+</body>
+</html>
