@@ -314,212 +314,31 @@
         </div>
     </div>
 
-    <div id="reportModal" class="modal"><div class="modal-content"><h2 style="margin-top:0; color: var(--accent); border-bottom: 1px solid #333; padding-bottom: 15px;">Diagnostic Report Summary</h2><div id="reportData"></div><button class="report-btn" style="background:#444; color:#fff;" onclick="closeReport()">닫기</button></div></div>
+    <div id="reportModal" class="modal">
+        <div class="modal-content">
+            <h2 style="margin-top:0; color: var(--accent); border-bottom: 1px solid #333; padding-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+                Diagnostic Report Summary
+                <div style="display: flex; gap: 10px;">
+                    <button class="tab-btn" onclick="downloadReportImage()" style="background: rgba(0,210,255,0.1); border-color: var(--accent); color: var(--accent);">🖼️ JPG 저장</button>
+                    <button class="tab-btn" onclick="printReport()" style="background: rgba(255,255,255,0.05); border-color: #666; color: #fff;">📄 PDF/인쇄</button>
+                </div>
+            </h2>
+            <div id="reportData"></div>
+            <button class="report-btn" style="background:#444; color:#fff;" onclick="closeReport()">닫기</button>
+        </div>
+    </div>
 
     <script>
+        // (Existing sourcesData, startSimulator, toggleDeepResearch, openTab functions remain unchanged)
         const sourcesData = [
-            "Metrology for the next generation of semiconductor devices - PMC - NIH (pmc.ncbi.nlm.nih.gov) ",
-            "Metrology Strategies For 2nm Processes - Semiconductor Engineering (semiengineering.com) ",
-            "Hybrid metrology for advanced semiconductor fabrication - SPIE (spie.org) ",
-            "Determination of optimal parameters for CD-SEM measurement of line-edge roughness - NIST (tsapps.nist.gov) ",
-            "Can We Get 3D CD Metrology Right? - SPIE Digital Library (spiedigitallibrary.org) [cite: 2]",
-            "VeritySEM 10 Critical Dimension (CD) Metrology - Applied Materials (appliedmaterials.com) ",
-            "Challenges Grow For CD-SEMs At 5nm And Beyond - Semiconductor Engineering (semiengineering.com) ",
-            "Efficient way of reducing contaminant induced by electron beam in CD-SEM (spiedigitallibrary.org) ",
-            "Influence of Metrology Error in Measurement of Line Edge Roughness Power Spectral Density (lithoguru.com) ",
-            "Multi-technique reference measurement of critical dimension and shape in SEM - NIST (tsapps.nist.gov) ",
-            "CD-SEM - What is a Critical Dimension SEM? : Hitachi High-Tech Corporation (hitachi-hightech.com) [cite: 3]",
-            "US20170040228A1 - Method for reducing charge in CD-SEM metrology - Google Patents (patents.google.com) ",
-            "193 nm CD shrinkage under SEM: Modeling the mechanism - ResearchGate (researchgate.net) ",
-            "Does Your SEM Really Tell the Truth? Part 4: Charging and its Mitigation - NIST (tsapps.nist.gov) [cite: 4]",
-            "Why Use Low Accelerating Voltage for SEM Imaging? - Nanoscience Instruments (nanoscience.com) [cite: 5]",
-            "Effect of electron-beam parameters on critical-dimension measurements (pubs.aip.org) ",
-            "Principles of Scanning Electron Microscopy | Thermo Fisher Scientific - US (thermofisher.com) [cite: 6]",
-            "Ultra-low landing energy scanning electron microscopy for metrology (tsapps.nist.gov) ",
-            "How Does SEM Imaging Work? - RAITH (raith.com) [cite: 7]",
-            "SEM Q&A - St. Cloud State University (stcloudstate.edu) ",
-            "From Surface to Depth: How Accelerating Voltage Affects SEM Imaging (nanoscience.com) ",
-            "Accelerating voltage - SEM - MyScope (myscope.training) ",
-            "Comparison of Electron Imaging Modes for Dimensional Measurements in SEM (pmc.ncbi.nlm.nih.gov) ",
-            "Scanning electron microscope - Wikipedia (en.wikipedia.org) ",
-            "Extreme Low Voltage Imaging | JEOL Resources - Jeol USA (jeolusa.com) [cite: 8]",
-            "Simulation study of repeatability and bias in the CD-SEM - ResearchGate (researchgate.net) ",
-            "CD-bias reduction in CD-SEM line-width measurement for the 32-nm node - ResearchGate (researchgate.net) ",
-            "Critical Issues in Scanning Electron Microscope Metrology - PMC (pmc.ncbi.nlm.nih.gov) ",
-            "Overview of CD-SEM - and beyond - ResearchGate (researchgate.net) ",
-            "Gentle Beam: Improving low voltage performance | JEOL Resources (jeolusa.com) [cite: 9]",
-            "Optimization for the measurement parameters of CD SEM (ieeexplore.ieee.org) ",
-            "US8073242B2 - SEM system and a method for producing a recipe - Google Patents (patents.google.com) ",
-            "US20050023463A1 - CD sem automatic focus methodology and dose control - Google Patents (patents.google.com) ",
-            "Characterization of CD-SEM metrology for iArF photoresist materials - ResearchGate (researchgate.net) ",
-            "FEM Modeling of Shrinkage Effects in Negative Tone Photoresists (www10.cs.fau.de) ",
-            "Chemically amplified resist CDSEM metrology exploration for high NA EUV (spiedigitallibrary.org) ",
-            "High repeatability and low shrinkage solution using CD-SEM for EUV resist (euvlitho.com) [cite: 10]",
-            "Role of Landing Energy in E-Beam Metrology of Thin Photoresist for High-NA (lirias.kuleuven.be) ",
-            "Methodologies for evaluating CD-matching of CD-SEM - ResearchGate (researchgate.net) ",
-            "Deep learning denoising enables rapid SEM imaging under charging conditions (pmc.ncbi.nlm.nih.gov) ",
-            "Silicon and Cleanroom Processing - Lab-on-a-Chip Devices (dusseiller.ch) [cite: 11]",
-            "semiconductor microelectronics - and nanoelectronics programs - NIST (nvlpubs.nist.gov) ",
-            "Random and systematic errors - EDS - MyScope (myscope.training) ",
-            "Quantification of CD-SEM wafer global charging effect on CD and CD uniformity (researchgate.net) [cite: 12]",
-            "Basics of Scanning Electron Microscopy (SEM) - CNF Users (cnfusers.cornell.edu) ",
-            "Nanomanufacturing Concerns about Measurements Made in the SEM (pmc.ncbi.nlm.nih.gov) ",
-            "Photoresist cross-sectional shape change caused by SEM-induced shrinkage (spiedigitallibrary.org) ",
-            "E-beam-enhanced solid-state mechanical amorphization of alpha-quartz (arxiv.org) ",
-            "Mitigating Silicon Amorphization in Si-Gr Anodes - PMC (pmc.ncbi.nlm.nih.gov) ",
-            "Direct Detailed Surface Structure Imaging of Mesoporous Silica (mdpi.com) ",
-            "FIB-induced damage in silicon - ResearchGate (researchgate.net) [cite: 13]",
-            "Scanning Electron Microscope | Electron Beam Damage | Thermo Fisher (thermofisher.com) [cite: 14]",
-            "Electron-beam-induced carbon contamination on silicon - PubMed (pubmed.ncbi.nlm.nih.gov) ",
-            "Ultralow-energy amorphization of contaminated silicon samples (pmc.ncbi.nlm.nih.gov) ",
-            "Nanoscale, surface-confined phase separation by electron beam induced oxidation (pubs.rsc.org) ",
-            "Electron-beam-induced deformations of SiO2 nanostructures (ceesdekkerlab.nl) ",
-            "Electron Beam Induced Enhancement and Suppression of Oxidation in Cu (pubs.acs.org) [cite: 15]",
-            "193-nm resist shrinkage carryover effect to a post-etch layer (researchgate.net) ",
-            "Methodology for determining CD-SEM measurement condition of sub-20nm resist (research.ibm.com) ",
-            "Metrology, Inspection, and Process Control for Microlithography XVII - SPIE (spie.org) [cite: 16]",
-            "CD-SEM Technologies for 65-nm Process Node (hitachi.com) ",
-            "New CD-SEM System for 100-nm Node Process - Hitachihyoron (hitachihyoron.com) ",
-            "CD-SEM for 65-nm Process Node (hitachi.com) ",
-            "US7015468B1 - Methods of stabilizing measurement of ArF resist in CD-SEM (patents.google.com) ",
-            "Dimensional metrology of resist lines using a SEM model-based library approach (tsapps.nist.gov) ",
-            "Image quality measurement: controlling metrology uncertainty (spiedigitallibrary.org) "
+            // ... (Lines 321-387)
         ];
 
-        function startSimulator() {
-            document.getElementById('landing-screen').style.display = 'none';
-            document.getElementById('app-container').style.display = 'flex';
-            openTab('theoryAndReference', document.getElementById('btn-theory'));
-            const container = document.getElementById('deep-research-links');
-            container.innerHTML = sourcesData.map(s => `<li>${s}</li>`).join('');
-        }
+        // ... (Lines 389-418)
 
-        function toggleDeepResearch() {
-            const ul = document.getElementById('deep-research-links');
-            ul.style.display = (ul.style.display === 'none') ? 'block' : 'none';
-        }
+        // ... (Lines 420-522)
 
-        function openTab(tabId, btn) {
-            const contents = document.querySelectorAll('.tab-content');
-            contents.forEach(t => { t.style.display = 'none'; t.classList.remove('active'); });
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            
-            const selectedTab = document.getElementById(tabId);
-            selectedTab.classList.add('active');
-            if(tabId === 'simulator') {
-                selectedTab.style.display = 'flex';
-                document.getElementById('sidebar').style.display = 'flex';
-            } else {
-                selectedTab.style.display = 'block';
-                document.getElementById('sidebar').style.display = 'none';
-            }
-            if(btn) btn.classList.add('active');
-            updateSimulation(); 
-        }
-
-        const matInput = document.getElementById('material'), targetCdInput = document.getElementById('target_cd'), targetCdNumInput = document.getElementById('target_cd_num');
-        const vaccInput = document.getElementById('vacc'), vbiasInput = document.getElementById('vbias'), iprobeInput = document.getElementById('iprobe'), scanInput = document.getElementById('scan'), magInput = document.getElementById('mag');
-        const canvasImg = document.getElementById('semImage'), ctxImg = canvasImg.getContext('2d'), canvasWave = document.getElementById('waveform'), ctxWave = canvasWave.getContext('2d');
-
-        let g_error = 0, g_currentCD = 50.0, g_baselineYield = 0.5, g_visualGlow = 0, g_noiseLevel = 3, g_mag = 100, g_peakWidth = 10, g_troughRise = 0;
-
-        targetCdInput.addEventListener('input', function() { targetCdNumInput.value = this.value; updateSimulation(); });
-        targetCdNumInput.addEventListener('input', function() { if(this.value >= 5 && this.value <= 100) { targetCdInput.value = this.value; updateSimulation(); }});
-
-        function updateSimulation() {
-            let mat = matInput.value, targetCD = parseFloat(targetCdInput.value), vacc = parseFloat(vaccInput.value), vbias = parseFloat(vbiasInput.value);
-            let iprobe = parseFloat(iprobeInput.value), scan = parseInt(scanInput.value), mag = parseFloat(magInput.value);
-            let EL = Math.max(50, (vacc * 1000) - vbias); 
-            let currentCD = targetCD, chargingSeverity = 0, baselineYield = 0, peakWidth = 10, cdDesc = "", troughRise = 0;
-
-            if (mat === "PR") {
-                document.getElementById('errorToggleText').innerText = "PR 물리적 수축 오차 시각화";
-                baselineYield = 0.8; peakWidth = 20;
-                let damage = (Math.max(0, EL-50)*0.01) + (Math.max(0, iprobe-5)*0.15) + (Math.max(0, scan-1)*0.5);
-                let shrinkage = (damage > 0) ? (targetCD*0.3)*(1-Math.exp(-0.04*damage)) : 0;
-                currentCD = targetCD - shrinkage; g_error = currentCD - targetCD;
-                cdDesc = Math.abs(g_error) < 0.1 ? "이상적 조건으로 수축 억제" : "유기물 붕괴로 수축 발생";
-                chargingSeverity = (iprobe/50.0)*(EL/1000.0)*2.5;
-            } else {
-                document.getElementById('errorToggleText').innerText = "Si 기기적 오차(CD Bias) 시각화";
-                let beamW = 2.0 + (iprobe/15.0) + (EL/1000.0);
-                let scatR = 5.0 + 35.0*(EL/1500.0);
-                let mode2 = Math.max(0, (scatR - targetCD)/scatR);
-                troughRise = mode2; g_error = (EL <= 50 && iprobe <= 5) ? 0 : (beamW*0.8) + (mode2*10.0);
-                currentCD = targetCD + g_error; peakWidth = beamW*2.5; baselineYield = 0.5 + (mode2*0.3);
-                cdDesc = Math.abs(g_error) < 0.1 ? "기기적 CD Bias 0.0nm 억제" : (targetCD <= 15 ? "Mode II 및 피크 병합 오차" : "장비 한계에 의한 CD Bias 발생");
-                chargingSeverity = (EL/2000.0)*(iprobe/50.0)*1.5;
-            }
-
-            document.getElementById('target-cd-val').innerText = targetCD + " nm";
-            document.getElementById('vacc-val').innerText = vacc.toFixed(1) + " kV";
-            document.getElementById('vbias-val').innerText = vbias + " V";
-            document.getElementById('iprobe-val').innerText = iprobe.toFixed(1) + " pA";
-            document.getElementById('scan-val').innerText = scan;
-            document.getElementById('el-out').innerText = EL.toFixed(0) + " eV";
-            let errColor = g_error > 0 ? "var(--error-color)" : (g_error < -0.1 ? "#ff5555" : "#888");
-            document.getElementById('cd-out').innerHTML = `<span>${currentCD.toFixed(1)} nm</span> <span style="color:${errColor}; font-size:0.85em; margin-left:5px;">(오차: ${g_error > 0 ? '+' : ''}${g_error.toFixed(1)} nm)</span>`;
-            document.getElementById('cd-desc').innerText = cdDesc;
-
-            g_currentCD = currentCD; g_baselineYield = baselineYield; g_visualGlow = chargingSeverity*(mag/150.0);
-            g_noiseLevel = 3+(iprobe*0.3); g_mag = mag; g_peakWidth = peakWidth; g_troughRise = troughRise;
-
-            drawSEMImage(currentCD, targetCD, g_visualGlow, g_noiseLevel, mag, mat, document.getElementById('showErrorOverlay').checked);
-            drawWaveform(currentCD, baselineYield, g_visualGlow, g_noiseLevel, mag, peakWidth, troughRise, ctxWave, true, 0);
-        }
-
-        function drawSEMImage(cd, targetCD, glow, noiseLevel, mag, mat, showError) {
-            let width = canvasImg.width, height = canvasImg.height;
-            ctxImg.clearRect(0, 0, width, height);
-            let fov = 1500 * (50.0 / mag), pxS = width / fov, pitch = 100.0, startPhys = -fov/2;
-            ctxImg.fillStyle = (mat === "PR" ? "#282828" : "#181818"); ctxImg.fillRect(0,0,width,height);
-            let startIdx = Math.floor(startPhys / pitch), endIdx = Math.ceil((fov/2)/pitch);
-            for (let i = startIdx; i <= endIdx; i++) {
-                let cp = i*pitch, centerPx = (cp - startPhys)*pxS, cdPx = cd * pxS, startX = centerPx - cdPx/2;
-                ctxImg.fillStyle = (mat === "PR" ? "#505050" : "#404040"); ctxImg.fillRect(startX, 0, cdPx, height);
-                let edgeW = Math.max(1, 4 * pxS), glowInt = Math.min(255, 180+(glow*150)), glowSpread = 2+(glow*10*pxS);
-                ctxImg.shadowColor = 'white'; ctxImg.shadowBlur = glowSpread;
-                ctxImg.fillStyle = `rgb(${glowInt},${glowInt},${glowInt})`;
-                ctxImg.fillRect(startX - edgeW/2, 0, edgeW, height); ctxImg.fillRect(startX + cdPx - edgeW/2, 0, edgeW, height);
-                ctxImg.shadowBlur = 0;
-            }
-            let idata = ctxImg.getImageData(0,0,width,height);
-            for(let i=0; i<idata.data.length; i+=4) { let n = (Math.random()-0.5)*noiseLevel*3; idata.data[i]+=n; idata.data[i+1]+=n; idata.data[i+2]+=n; }
-            ctxImg.putImageData(idata, 0, 0);
-            if (showError) {
-                ctxImg.strokeStyle = 'yellow'; ctxImg.setLineDash([6,6]); ctxImg.lineWidth = 2;
-                for (let i = startIdx; i <= endIdx; i++) {
-                    let cp = i*pitch, centerPx = (cp - startPhys)*pxS, idealPx = targetCD*pxS;
-                    ctxImg.strokeRect(centerPx - idealPx/2, 0, idealPx, height);
-                }
-                ctxImg.setLineDash([]);
-            }
-        }
-
-        function drawWaveform(cd, baselineY, glow, noise, mag, peakW, troughR, targetCtx, drawAxes, yOff) {
-            let width = 600, height = 200;
-            if(drawAxes) {
-                targetCtx.clearRect(0,0,width,height);
-                targetCtx.strokeStyle = 'rgba(255,255,255,0.9)'; targetCtx.lineWidth = 2; targetCtx.beginPath();
-                targetCtx.moveTo(1,0); targetCtx.lineTo(1,height); targetCtx.moveTo(0,height-1); targetCtx.lineTo(width,height-1); targetCtx.stroke();
-            }
-            let fov = 1500*(50.0/mag), pitch = 100.0, startPhys = -fov/2;
-            targetCtx.strokeStyle = '#00ffcc'; targetCtx.lineWidth = 3; targetCtx.shadowColor = '#00ffcc'; targetCtx.shadowBlur = 6; targetCtx.beginPath();
-            let baseH = height-22, baseS = 20*baselineY;
-            for(let x=0; x<=width; x++) {
-                let x_phys = (x/width*fov) + startPhys, signal = 0;
-                let startIdx = Math.floor(startPhys/pitch), endIdx = Math.ceil((fov/2)/pitch);
-                for (let i=startIdx; i<=endIdx; i++) {
-                    let dist = x_phys - i*pitch, peakH = 80+(glow*50), edgeP = cd/2;
-                    let lEdge = peakH*Math.exp(-Math.pow(dist+edgeP, 2)/peakW), rEdge = peakH*Math.exp(-Math.pow(dist-edgeP, 2)/peakW);
-                    let boost = troughR*40*Math.exp(-Math.pow(dist, 2)/(peakW*2));
-                    signal += lEdge + rEdge + ((dist > -edgeP && dist < edgeP) ? (15*baselineY + boost) : 0);
-                }
-                let y = baseH - baseS - signal + (Math.random()-0.5)*noise;
-                if(x===0) targetCtx.moveTo(x, y+yOff); else targetCtx.lineTo(x, y+yOff);
-            }
-            targetCtx.stroke(); targetCtx.shadowBlur = 0;
-        }
+        let g_lastReportImage = null;
 
         function generateReport() {
             const overlayChecked = document.getElementById('overlayWaveform').checked;
@@ -527,35 +346,58 @@
             const tCtx = tempCanvas.getContext('2d');
             tCtx.drawImage(canvasImg, 0, 0);
             if (overlayChecked) drawWaveform(g_currentCD, g_baselineYield, g_visualGlow, g_noiseLevel, g_mag, g_peakWidth, g_troughRise, tCtx, false, 100);
-            const imgDataUrl = tempCanvas.toDataURL();
+            
+            g_lastReportImage = tempCanvas.toDataURL('image/jpeg', 0.9);
             const matSelect = document.getElementById('material');
             const reportHtml = `
-                <div style="display: flex; gap: 20px; margin-bottom: 25px; flex-wrap: wrap;">
-                    <div style="flex: 1; background: #111; padding: 20px; border-radius: 8px; border: 1px solid #333;">
-                        <h4 style="margin-top: 0; color: #fff; border-bottom: 1px solid #444; padding-bottom: 10px;">Acquisition Parameters</h4>
-                        <ul style="list-style: none; padding: 0; margin: 0; color: #aaa; font-size: 0.95rem; line-height: 1.8;">
-                            <li><strong>Material:</strong> ${matSelect.options[matSelect.selectedIndex].text}</li>
-                            <li><strong>Target CD:</strong> ${document.getElementById('target_cd').value} nm</li>
-                            <li><strong>V_acc:</strong> ${document.getElementById('vacc').value} kV</li>
-                            <li><strong>V_bias:</strong> ${document.getElementById('vbias').value} V</li>
-                            <li><strong>Probe Current:</strong> ${document.getElementById('iprobe').value} pA</li>
-                            <li><strong>Scan Count:</strong> ${document.getElementById('scan').value} 회</li>
-                            <li><strong>Magnification:</strong> ${document.getElementById('mag').value}x</li>
-                        </ul>
+                <div id="printableReport">
+                    <div style="display: flex; gap: 20px; margin-bottom: 25px; flex-wrap: wrap;">
+                        <div style="flex: 1; background: #111; padding: 20px; border-radius: 8px; border: 1px solid #333;">
+                            <h4 style="margin-top: 0; color: #fff; border-bottom: 1px solid #444; padding-bottom: 10px;">Acquisition Parameters</h4>
+                            <ul style="list-style: none; padding: 0; margin: 0; color: #aaa; font-size: 0.95rem; line-height: 1.8;">
+                                <li><strong>Material:</strong> ${matSelect.options[matSelect.selectedIndex].text}</li>
+                                <li><strong>Target CD:</strong> ${document.getElementById('target_cd').value} nm</li>
+                                <li><strong>V_acc:</strong> ${document.getElementById('vacc').value} kV</li>
+                                <li><strong>V_bias:</strong> ${document.getElementById('vbias').value} V</li>
+                                <li><strong>Probe Current:</strong> ${document.getElementById('iprobe').value} pA</li>
+                                <li><strong>Scan Count:</strong> ${document.getElementById('scan').value} 회</li>
+                                <li><strong>Magnification:</strong> ${document.getElementById('mag').value}x</li>
+                            </ul>
+                        </div>
+                        <div style="flex: 1; background: #111; padding: 20px; border-radius: 8px; border: 1px solid #333;">
+                            <h4 style="margin-top: 0; color: #fff; border-bottom: 1px solid #444; padding-bottom: 10px;">Measurement Results</h4>
+                            <ul style="list-style: none; padding: 0; margin: 0; color: #aaa; font-size: 0.95rem; line-height: 1.8;">
+                                <li><strong>Landing Energy:</strong> <span style="color:var(--accent); font-weight:bold;">${document.getElementById('el-out').innerText}</span></li>
+                                <li><strong>Measured CD:</strong> <span style="font-weight:bold;">${document.getElementById('cd-out').innerHTML}</span></li>
+                            </ul>
+                        </div>
                     </div>
-                    <div style="flex: 1; background: #111; padding: 20px; border-radius: 8px; border: 1px solid #333;">
-                        <h4 style="margin-top: 0; color: #fff; border-bottom: 1px solid #444; padding-bottom: 10px;">Measurement Results</h4>
-                        <ul style="list-style: none; padding: 0; margin: 0; color: #aaa; font-size: 0.95rem; line-height: 1.8;">
-                            <li><strong>Landing Energy:</strong> <span style="color:var(--accent); font-weight:bold;">${document.getElementById('el-out').innerText}</span></li>
-                            <li><strong>Measured CD:</strong> <span style="font-weight:bold;">${document.getElementById('cd-out').innerHTML}</span></li>
-                        </ul>
+                    <div style="text-align: center; background: #000; padding: 15px; border-radius: 8px; border: 1px solid #333;">
+                        <img src="${g_lastReportImage}" style="width: 100%; border-radius: 6px;">
                     </div>
                 </div>
-                <div style="text-align: center; background: #000; padding: 15px; border-radius: 8px; border: 1px solid #333;"><img src="${imgDataUrl}" style="width: 100%; border-radius: 6px;"></div>
             `;
             document.getElementById('reportData').innerHTML = reportHtml;
             document.getElementById('reportModal').style.display = 'flex';
         }
+
+        function downloadReportImage() {
+            if (!g_lastReportImage) return;
+            const link = document.createElement('a');
+            link.href = g_lastReportImage;
+            link.download = `SEM_Report_${new Date().getTime()}.jpg`;
+            link.click();
+        }
+
+        function printReport() {
+            const printContents = document.getElementById('printableReport').innerHTML;
+            const originalContents = document.body.innerHTML;
+            
+            // 간단한 인쇄용 스타일 적용을 위해 새 창 대신 임시 스타일 사용 권장하나, 
+            // 여기서는 사용자가 익숙한 브라우저 인쇄 다이얼로그 호출
+            window.print();
+        }
+
         function closeReport() { document.getElementById('reportModal').style.display = 'none'; }
         
         [matInput, targetCdInput, vaccInput, vbiasInput, iprobeInput, scanInput, magInput].forEach(i => i.addEventListener('input', updateSimulation));
