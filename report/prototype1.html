@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CD-SEM Simulator - Model-Based Metrology v8.8</title>
+    <style>
+        :root {
+            --bg-color: #0a0a0c;
+            --panel-bg: #151518;
+            --accent: #00d2ff;
+            --error-color: #ffaa00; 
+            --text-color: #e0e0e0;
+            --border-color: #333;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- 랜딩 스크린 --- */
+        .landing-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100%;
+            background: radial-gradient(circle at center, #1a1a24 0%, var(--bg-color) 100%);
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 5000;
+        }
+
+        .landing-title {
+            font-size: 4.5rem;
+            background: linear-gradient(90deg, #fff, var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            text-align: center;
+            letter-spacing: 2px;
+            text-shadow: 0 0 30px rgba(0, 210, 255, 0.3);
+        }
+
+        .landing-subtitle { font-size: 1.5rem; color: #888; margin-top: 0; margin-bottom: 50px; letter-spacing: 5px; }
+
+        .start-btn {
+            padding: 18px 50px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #000;
+            background: linear-gradient(135deg, var(--accent), #0080ff);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 210, 255, 0.3);
+        }
+
+        .start-btn:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0, 210, 255, 0.6); }
+
+        header {
+            background: rgba(21, 21, 24, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 15px 30px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+
+        h1 { margin: 0; font-size: 1.5rem; background: linear-gradient(90deg, #fff, var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px; }
+
+        .main-container { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { width: 350px; background: var(--panel-bg); border-right: 1px solid var(--border-color); padding: 15px 20px; overflow-y: auto; display: none; flex-direction: column; gap: 10px; transition: all 0.3s ease; }
+        .content-area { flex: 1; background: #000; display: flex; flex-direction: column; overflow-y: auto; padding: 20px; box-sizing: border-box; }
+
+        .tab-content { display: none; width: 100%; height: 100%; flex-direction: column; }
+        .tab-content.active { display: flex; }
+
+        .panel { background: #1c1c21; border-radius: 12px; padding: 15px; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .control-group { margin-bottom: 10px; }
+        label { display: block; font-size: 0.85rem; margin-bottom: 8px; color: #999; font-weight: 500; }
+        select { width: 100%; padding: 6px; background: #2a2a30; color: #fff; border: 1px solid #444; border-radius: 5px; outline: none; margin-bottom: 5px; font-size: 0.9rem; }
+        input[type="range"] { width: 100%; height: 6px; background: #333; border-radius: 5px; outline: none; accent-color: var(--accent); }
+        .val-display { float: right; color: var(--accent); font-family: 'JetBrains Mono', monospace; font-weight: bold; }
+
+        canvas { border-radius: 8px; box-shadow: 0 0 40px rgba(0, 210, 255, 0.1); background: #050505; }
+        .canvas-title { font-size: 0.9rem; color: #777; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; text-align: center; font-weight: bold; }
+
+        .tab-btn { padding: 8px 16px; background: transparent; border: 1px solid #444; color: #999; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s; }
+        .tab-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(0, 210, 255, 0.1); }
+
+        .diag-item { display: flex; flex-direction: column; padding: 8px 0; border-bottom: 1px solid #333; }
+        .diag-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; font-size: 0.9rem; }
+        .diag-desc { font-size: 0.75rem; color: #888; line-height: 1.3; }
+
+        .report-btn { background: linear-gradient(135deg, var(--accent), #0080ff); color: #000; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.3s; width: 100%; margin-top: 10px; }
+        .report-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0, 210, 255, 0.4); }
+        .checkbox-container { display: flex; align-items: center; gap: 8px; padding: 10px; background: rgba(0,210,255,0.05); border-radius: 6px; border: 1px solid #333; cursor: pointer; margin-top: 5px; }
+        .checkbox-container input { cursor: pointer; accent-color: var(--accent); width: 16px; height: 16px; margin: 0; }
+        .checkbox-container span { color: #fff; font-size: 0.85rem; }
+
+        /* 이론 탭 스타일 */
+        .theory-card { background: rgba(255,255,255,0.03); border: 1px solid #333; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+        .theory-card h3 { color: var(--accent); border-bottom: 1px solid #444; padding-bottom: 10px; margin-top: 0; }
+
+        details { background: #1c1c21; border: 1px solid #333; border-radius: 8px; margin-bottom: 12px; overflow: hidden; }
+        summary { padding: 14px 20px; color: #fff; font-weight: bold; cursor: pointer; outline: none; list-style: none; display: flex; justify-content: space-between; align-items: center; background: #25252b; }
+        summary::after { content: '▼'; font-size: 0.8rem; color: var(--accent); transition: transform 0.3s; }
+        details[open] summary::after { transform: rotate(180deg); }
+        .details-content { padding: 15px 25px; background: #111; color: #ccc; border-top: 1px solid #333; line-height: 1.8; }
+
+        .reference-list { list-style: none; padding: 0; color: #aaa; max-width: 1000px; margin: 0 auto; }
+        .reference-list li { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #333; }
+        .reference-list li strong { color: var(--accent); font-size: 1.1rem; }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 4000; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+        .modal-content { background: #1a1a1e; width: 90%; max-width: 800px; padding: 30px; border-radius: 15px; border: 1px solid var(--accent); max-height: 90vh; overflow-y: auto; }
+    </style>
+</head>
+<body>
+
+    <div id="landing-screen" class="landing-screen">
+        <h1 class="landing-title">CD-SEM EXPERT SIMULATOR</h1>
+        <p class="landing-subtitle">PROFESSIONAL EDUCATION</p>
+        <button class="start-btn" onclick="startSimulator()">시작하기</button>
+    </div>
+
+    <div id="app-container" style="display: none; flex-direction: column; flex: 1; width: 100%; overflow: hidden;">
+        
+        <header>
+            <h1>CD-SEM SIMULATOR <span style="font-weight: 200; font-size: 0.8em; opacity: 0.5;">v8.8 Professional Metrology</span></h1>
+            <div style="display: flex; gap: 10px;">
+                <button class="tab-btn active" id="btn-theory" onclick="openTab('theoryAndReference', this)">이론</button>
+                <button class="tab-btn" id="btn-simulator" onclick="openTab('simulator', this)">시뮬레이터</button>
+                <button class="tab-btn" id="btn-reference-list" onclick="openTab('referenceList', this)">레퍼런스</button>
+            </div>
+        </header>
+
+        <div class="main-container">
+            <div class="sidebar" id="sidebar"> 
+                <div class="panel" style="padding-bottom: 15px; margin-bottom: 0;">
+                    <h3 style="margin-top: 0; font-size: 1rem; color: #fff;">Acquisition Parameters</h3>
+                    <div class="control-group">
+                        <label>측정 소재 (Material)</label>
+                        <select id="material" onchange="updateSimulation()">
+                            <option value="PR">포토레지스트 (Photoresist, 유기물)</option>
+                            <option value="Si">실리콘 (Silicon, 무기물)</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Target CD (목표 선폭) <span class="val-display" id="target-cd-val">50 nm</span></label>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <input type="range" id="target_cd" min="5" max="100" step="1" value="50" style="flex: 1;">
+                            <input type="number" id="target_cd_num" min="5" max="100" step="1" value="50" style="width: 50px; padding: 4px; border-radius: 4px; background: #333; color: white; border: 1px solid #555; outline: none; font-family: monospace; text-align: center;">
+                        </div>
+                    </div>
+                    <div class="control-group"><label>V<sub>acc</sub> (Acceleration) <span class="val-display" id="vacc-val">1.0 kV</span></label><input type="range" id="vacc" min="0.3" max="2.0" step="0.1" value="1.0"></div>
+                    <div class="control-group"><label>V<sub>bias</sub> (Retarding) <span class="val-display" id="vbias-val">500 V</span></label><input type="range" id="vbias" min="0" max="1500" step="50" value="500"></div>
+                    <div class="control-group"><label>Probe Current <span class="val-display" id="iprobe-val">10.0 pA</span></label><input type="range" id="iprobe" min="5.0" max="50.0" step="1.0" value="10.0"></div>
+                    <div class="control-group"><label>Scan Count <span class="val-display" id="scan-val">1</span></label><input type="range" id="scan" min="1" max="50" step="1" value="1"></div>
+                    <div class="control-group">
+                        <label>Magnification</label>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 0.8rem; color: #999;">Low</span>
+                            <input type="range" id="mag" min="30" max="500" step="10" value="100" style="flex: 1;">
+                            <span style="font-size: 0.8rem; color: #999;">High</span>
+                        </div>
+                    </div>
+                    <label class="checkbox-container error-toggle" id="errorToggleLabel">
+                        <input type="checkbox" id="showErrorOverlay" onchange="updateSimulation()">
+                        <span id="errorToggleText">이상적 규격 대비 오차 시각화</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="content-area" id="main-content">
+                
+                <div id="theoryAndReference" class="tab-content theory-content active" style="padding: 0 20px;">
+                    <div class="theory-card">
+                        <h3>1. 시뮬레이션 기획 의도</h3>
+                        <div style="text-align: center; margin-bottom: 25px;">
+                            <img src="assets/theory_concept.png" alt="CD-SEM Metrology Concept" style="width: 100%; max-width: 500px; border-radius: 12px; border: 1px solid #444; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                        </div>
+                        <p>반도체 미세 공정에서 CD-SEM 측정은 수율을 결정짓는 핵심 공정입니다.<br>
+                        본 시뮬레이터는 CD-SEM 기초학습을 위해 기획되었습니다.</p>
+                    </div>
+                    <div class="theory-card">
+                        <h3>2. CD-SEM 측정 원리 및 소재별 문제점/대처법</h3>
+                        
+                        <!-- SEM 원리 섹션 -->
+                        <div style="margin-bottom: 35px;">
+                            <h4 style="color: var(--accent); margin-top: 20px; margin-bottom: 15px; border-left: 4px solid var(--accent); padding-left: 10px;">SEM 원리</h4>
+                            <div style="text-align: center; margin-bottom: 20px;">
+                                <img src="assets/sem_principle.png" alt="SEM Measurement Principle" style="width: 100%; max-width: 450px; border-radius: 10px; border: 1px solid #444; box-shadow: 0 5px 20px rgba(0,0,0,0.3);">
+                            </div>
+                            <div style="background: rgba(0,210,255,0.05); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                                <p style="margin: 0; color: #fff;">전자빔을 이용하여 전자가 시편과 충돌할 때 발생하는 이차전자를 수집해 이미지로 구현</p>
+                            </div>
+                        </div>
+
+                        <!-- 구동 원리 섹션 -->
+                        <div style="margin-bottom: 35px; border-top: 1px solid #333; padding-top: 20px;">
+                            <h4 style="color: var(--accent); margin-bottom: 15px; border-left: 4px solid var(--accent); padding-left: 10px;">구동 원리</h4>
+                            <div style="text-align: center; margin-bottom: 20px;">
+                                <img src="assets/sem_operation.png" alt="SEM Operation Principle" style="width: 100%; max-width: 450px; border-radius: 10px; border: 1px solid #444; box-shadow: 0 5px 20px rgba(0,0,0,0.3);">
+                            </div>
+                            <p style="margin-bottom: 20px;">전자총에서 방출된 고에너지 전자빔이 자기 렌즈를 통해 미세하게 집속되어 시편 표면을 주사(Scan)합니다.<br>
+                            이때 시편과의 상호작용으로 방출되는 이차전자(SE)를 수집하여 각 지점의 신호 강도를 명암으로 변환함으로써 고해상도 이미지를 생성합니다.</p>
+                            
+                            <div style="text-align: center; background: #111; padding: 15px; border-radius: 8px; border: 1px solid #333; margin-bottom: 20px;">
+                                <span style="font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; color: var(--accent);">
+                                    E<sub>landing</sub> ≈ e(V<sub>acc</sub> - V<sub>bias</sub>)
+                                </span>
+                                <p style="font-size: 0.8rem; color: #888; margin-top: 10px;">(V<sub>acc</sub>: 가속 전압, V<sub>bias</sub>: 리타딩 바이어스 전압)</p>
+                            </div>
+                        </div>
+
+                        <p style="margin-bottom: 20px; font-weight: 500; color: #aaa;">Landing Energy가 전자빔의 투과 깊이와 시편 손상 정도를 결정하며, 소재 특성에 따라 최적의 파라미터 설정이 필수적입니다.</p>
+                        
+                        <details>
+                            <summary>포토레지스트 (PR, 유기물) 특징 및 문제점</summary>
+                            <div class="details-content">
+                                <ul>
+                                    <li><strong>수축 (Shrinkage):</strong> 전자빔 노출 시 고분자 결합 붕괴로 선폭이 물리적으로 줄어듭니다. 초저전압(ULV) 및 낮은 전류(Dose) 적용이 필수입니다.</li>
+                                    <li><strong>대전 (Charging):</strong> 부도체 표면에 전자가 축적되어 Blooming 현상이 발생합니다.</li>
+                                </ul>
+                            </div>
+                        </details>
+                        <details>
+                            <summary>실리콘 (Si, 무기물) 특징 및 기기적 왜곡</summary>
+                            <div class="details-content">
+                                <p style="color: #fff; margin-bottom: 10px;">실리콘은 물리적 수축은 없으나 장비 한계로 인한 파형 왜곡(CD Bias)이 크게 발생합니다.</p>
+                                <ul>
+                                    <li><strong>신호 왜곡 (Signal Bloom):</strong> 엣지 신호가 실제 패턴 폭보다 넓게 검출되어 선폭을 과대평가하게 됩니다.</li>
+                                    <li><strong>전자 산란 (Mode II):</strong> 선폭이 산란 범위(20~40nm)보다 작아지면 전자가 관통하여 파형 중심부 신호를 높입니다.</li>
+                                    <li><strong>피크 병합 (Peak Merging):</strong> 패턴이 10nm 이하로 작아지면 좌우 엣지 피크가 하나로 뭉쳐지는 왜곡이 발생합니다.</li>
+                                    <li><strong>비선형적 오차 폭증:</strong> 선폭이 얇아질수록 오차가 폭증하므로 이상적 빔 폭(5pA)과 Landing Energy(50eV) 설정이 필요합니다.</li>
+                                </ul>
+                            </div>
+                        </details>
+                    </div>
+                    <div class="theory-card">
+                        <h3>3. SE Waveform Profile 이란?</h3>
+                        <div style="text-align: center; margin-bottom: 20px;">
+                            <img src="assets/waveform_profile.png" alt="SE Waveform and Structure Correlation" style="width: 100%; max-width: 550px; border-radius: 12px; border: 1px solid #444; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                        </div>
+                        <p>CD-SEM이 웨이퍼 표면을 스캔할 때 수집된 2차 전자의 신호 강도를 시각화한 프로파일입니다. 피크 지점이 실제 물리적 엣지에 해당하며, 이 데이터를 기반으로 선폭을 도출합니다.</p>
+                    </div>
+                </div>
+
+                <div id="simulator" class="tab-content" style="height: 100%; box-sizing: border-box;">
+                    <div style="display: flex; flex-direction: row; gap: 20px; height: 100%;">
+                        <div style="flex: 2.2; display: flex; flex-direction: column; gap: 15px; min-width: 0; height: 100%;">
+                            <div class="panel" style="flex: 1.5; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; padding: 15px;">
+                                <div class="canvas-title">SEM 이미지 (Top View)</div>
+                                <div style="flex: 1; width: 100%; display: flex; justify-content: center; align-items: center; overflow: hidden;"><canvas id="semImage" width="600" height="400" style="max-width: 100%; max-height: 100%; object-fit: contain;"></canvas></div>
+                            </div>
+                            <div class="panel" style="flex: 1; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; padding: 15px;">
+                                <div class="canvas-title">SE Waveform Profile</div>
+                                <div style="flex: 1; width: 100%; display: flex; justify-content: center; align-items: center; overflow: hidden;"><canvas id="waveform" width="600" height="200" style="max-width: 100%; max-height: 100%; object-fit: contain;"></canvas></div>
+                            </div>
+                        </div>
+                        <div class="panel" style="flex: 1; margin: 0; display: flex; flex-direction: column; overflow: hidden; padding: 20px; box-sizing: border-box;">
+                            <h3 style="margin-top: 0; font-size: 1.1rem; color: #fff; border-bottom: 1px solid #333; padding-bottom: 10px;">Real-time Diagnostic</h3>
+                            <div id="diag-display" style="font-family: monospace; color: var(--accent); flex: 1; display: flex; flex-direction: column; gap: 10px; padding-top: 5px;">
+                                <div class="diag-item">
+                                    <div class="diag-header"><span>Landing Energy (Vacc-Vbias):</span> <span id="el-out">500 eV</span></div>
+                                    <div class="diag-desc">표면에 도달하는 전자 에너지</div>
+                                </div>
+                                <div class="diag-item" style="border-bottom: none;">
+                                    <div class="diag-header" style="align-items: center;">
+                                        <span style="white-space: nowrap;">Measured CD:</span>
+                                        <span id="cd-out" style="text-align: right; flex: 1; display:flex; justify-content:flex-end; align-items:center;">50.0 nm</span>
+                                    </div>
+                                    <div class="diag-desc" id="cd-desc" style="white-space: normal;">초기 선폭은 50.0nm입니다.</div>
+                                </div>
+                            </div>
+                            <div style="margin-top: auto; border-top: 1px solid #333; padding-top: 15px;">
+                                <label class="checkbox-container" style="margin-top: 0; margin-bottom: 10px;"><input type="checkbox" id="overlayWaveform"><span>SE Image & Wave Profile overlay</span></label>
+                                <button class="report-btn" style="margin-top: 0;" onclick="generateReport()">📋 분석 레포트 생성</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="referenceList" class="tab-content" style="padding: 0 40px;">
+                    <div class="panel" style="background: #111; height: 100%; overflow-y: auto;">
+                        <h2 style="color: var(--accent); margin-top: 0;">참고 문헌 (References)</h2>
+                        <ul class="reference-list" style="line-height: 1.8;">
+                            <li>[1] A.-L. Fabre et al., "Landing energy influence on CD-SEM measurement precision and accuracy," Proc. SPIE, 2006. [cite: 1, 16]</li>
+                            <li>[2] C. Shishido et al., "CD bias reduction in CD-SEM using model-based library method," Proc. SPIE, 2008. </li>
+                            <li style="border-bottom: none; margin-top: 20px;">
+                                <strong style="color: var(--accent); cursor: pointer; user-select: none;" onclick="toggleDeepResearch()">+ Google Deep Research ▼</strong>
+                                <ul id="deep-research-links" style="display: none; margin-top: 15px; padding-left: 20px; color: #888; font-size: 0.85rem; list-style-type: decimal; background: rgba(0,0,0,0.4); padding: 15px 15px 15px 40px; border-radius: 8px; max-height: 400px; overflow-y: auto; border: 1px solid #222;">
+                                    </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="reportModal" class="modal"><div class="modal-content"><h2 style="margin-top:0; color: var(--accent); border-bottom: 1px solid #333; padding-bottom: 15px;">Diagnostic Report Summary</h2><div id="reportData"></div><button class="report-btn" style="background:#444; color:#fff;" onclick="closeReport()">닫기</button></div></div>
+
+    <script>
+        const sourcesData = [
+            "Metrology for the next generation of semiconductor devices - PMC - NIH (pmc.ncbi.nlm.nih.gov) ",
+            "Metrology Strategies For 2nm Processes - Semiconductor Engineering (semiengineering.com) ",
+            "Hybrid metrology for advanced semiconductor fabrication - SPIE (spie.org) ",
+            "Determination of optimal parameters for CD-SEM measurement of line-edge roughness - NIST (tsapps.nist.gov) ",
+            "Can We Get 3D CD Metrology Right? - SPIE Digital Library (spiedigitallibrary.org) [cite: 2]",
+            "VeritySEM 10 Critical Dimension (CD) Metrology - Applied Materials (appliedmaterials.com) ",
+            "Challenges Grow For CD-SEMs At 5nm And Beyond - Semiconductor Engineering (semiengineering.com) ",
+            "Efficient way of reducing contaminant induced by electron beam in CD-SEM (spiedigitallibrary.org) ",
+            "Influence of Metrology Error in Measurement of Line Edge Roughness Power Spectral Density (lithoguru.com) ",
+            "Multi-technique reference measurement of critical dimension and shape in SEM - NIST (tsapps.nist.gov) ",
+            "CD-SEM - What is a Critical Dimension SEM? : Hitachi High-Tech Corporation (hitachi-hightech.com) [cite: 3]",
+            "US20170040228A1 - Method for reducing charge in CD-SEM metrology - Google Patents (patents.google.com) ",
+            "193 nm CD shrinkage under SEM: Modeling the mechanism - ResearchGate (researchgate.net) ",
+            "Does Your SEM Really Tell the Truth? Part 4: Charging and its Mitigation - NIST (tsapps.nist.gov) [cite: 4]",
+            "Why Use Low Accelerating Voltage for SEM Imaging? - Nanoscience Instruments (nanoscience.com) [cite: 5]",
+            "Effect of electron-beam parameters on critical-dimension measurements (pubs.aip.org) ",
+            "Principles of Scanning Electron Microscopy | Thermo Fisher Scientific - US (thermofisher.com) [cite: 6]",
+            "Ultra-low landing energy scanning electron microscopy for metrology (tsapps.nist.gov) ",
+            "How Does SEM Imaging Work? - RAITH (raith.com) [cite: 7]",
+            "SEM Q&A - St. Cloud State University (stcloudstate.edu) ",
+            "From Surface to Depth: How Accelerating Voltage Affects SEM Imaging (nanoscience.com) ",
+            "Accelerating voltage - SEM - MyScope (myscope.training) ",
+            "Comparison of Electron Imaging Modes for Dimensional Measurements in SEM (pmc.ncbi.nlm.nih.gov) ",
+            "Scanning electron microscope - Wikipedia (en.wikipedia.org) ",
+            "Extreme Low Voltage Imaging | JEOL Resources - Jeol USA (jeolusa.com) [cite: 8]",
+            "Simulation study of repeatability and bias in the CD-SEM - ResearchGate (researchgate.net) ",
+            "CD-bias reduction in CD-SEM line-width measurement for the 32-nm node - ResearchGate (researchgate.net) ",
+            "Critical Issues in Scanning Electron Microscope Metrology - PMC (pmc.ncbi.nlm.nih.gov) ",
+            "Overview of CD-SEM - and beyond - ResearchGate (researchgate.net) ",
+            "Gentle Beam: Improving low voltage performance | JEOL Resources (jeolusa.com) [cite: 9]",
+            "Optimization for the measurement parameters of CD SEM (ieeexplore.ieee.org) ",
+            "US8073242B2 - SEM system and a method for producing a recipe - Google Patents (patents.google.com) ",
+            "US20050023463A1 - CD sem automatic focus methodology and dose control - Google Patents (patents.google.com) ",
+            "Characterization of CD-SEM metrology for iArF photoresist materials - ResearchGate (researchgate.net) ",
+            "FEM Modeling of Shrinkage Effects in Negative Tone Photoresists (www10.cs.fau.de) ",
+            "Chemically amplified resist CDSEM metrology exploration for high NA EUV (spiedigitallibrary.org) ",
+            "High repeatability and low shrinkage solution using CD-SEM for EUV resist (euvlitho.com) [cite: 10]",
+            "Role of Landing Energy in E-Beam Metrology of Thin Photoresist for High-NA (lirias.kuleuven.be) ",
+            "Methodologies for evaluating CD-matching of CD-SEM - ResearchGate (researchgate.net) ",
+            "Deep learning denoising enables rapid SEM imaging under charging conditions (pmc.ncbi.nlm.nih.gov) ",
+            "Silicon and Cleanroom Processing - Lab-on-a-Chip Devices (dusseiller.ch) [cite: 11]",
+            "semiconductor microelectronics - and nanoelectronics programs - NIST (nvlpubs.nist.gov) ",
+            "Random and systematic errors - EDS - MyScope (myscope.training) ",
+            "Quantification of CD-SEM wafer global charging effect on CD and CD uniformity (researchgate.net) [cite: 12]",
+            "Basics of Scanning Electron Microscopy (SEM) - CNF Users (cnfusers.cornell.edu) ",
+            "Nanomanufacturing Concerns about Measurements Made in the SEM (pmc.ncbi.nlm.nih.gov) ",
+            "Photoresist cross-sectional shape change caused by SEM-induced shrinkage (spiedigitallibrary.org) ",
+            "E-beam-enhanced solid-state mechanical amorphization of alpha-quartz (arxiv.org) ",
+            "Mitigating Silicon Amorphization in Si-Gr Anodes - PMC (pmc.ncbi.nlm.nih.gov) ",
+            "Direct Detailed Surface Structure Imaging of Mesoporous Silica (mdpi.com) ",
+            "FIB-induced damage in silicon - ResearchGate (researchgate.net) [cite: 13]",
+            "Scanning Electron Microscope | Electron Beam Damage | Thermo Fisher (thermofisher.com) [cite: 14]",
+            "Electron-beam-induced carbon contamination on silicon - PubMed (pubmed.ncbi.nlm.nih.gov) ",
+            "Ultralow-energy amorphization of contaminated silicon samples (pmc.ncbi.nlm.nih.gov) ",
+            "Nanoscale, surface-confined phase separation by electron beam induced oxidation (pubs.rsc.org) ",
+            "Electron-beam-induced deformations of SiO2 nanostructures (ceesdekkerlab.nl) ",
+            "Electron Beam Induced Enhancement and Suppression of Oxidation in Cu (pubs.acs.org) [cite: 15]",
+            "193-nm resist shrinkage carryover effect to a post-etch layer (researchgate.net) ",
+            "Methodology for determining CD-SEM measurement condition of sub-20nm resist (research.ibm.com) ",
+            "Metrology, Inspection, and Process Control for Microlithography XVII - SPIE (spie.org) [cite: 16]",
+            "CD-SEM Technologies for 65-nm Process Node (hitachi.com) ",
+            "New CD-SEM System for 100-nm Node Process - Hitachihyoron (hitachihyoron.com) ",
+            "CD-SEM for 65-nm Process Node (hitachi.com) ",
+            "US7015468B1 - Methods of stabilizing measurement of ArF resist in CD-SEM (patents.google.com) ",
+            "Dimensional metrology of resist lines using a SEM model-based library approach (tsapps.nist.gov) ",
+            "Image quality measurement: controlling metrology uncertainty (spiedigitallibrary.org) "
+        ];
+
+        function startSimulator() {
+            document.getElementById('landing-screen').style.display = 'none';
+            document.getElementById('app-container').style.display = 'flex';
+            openTab('theoryAndReference', document.getElementById('btn-theory'));
+            const container = document.getElementById('deep-research-links');
+            container.innerHTML = sourcesData.map(s => `<li>${s}</li>`).join('');
+        }
+
+        function toggleDeepResearch() {
+            const ul = document.getElementById('deep-research-links');
+            ul.style.display = (ul.style.display === 'none') ? 'block' : 'none';
+        }
+
+        function openTab(tabId, btn) {
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(t => { t.style.display = 'none'; t.classList.remove('active'); });
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            
+            const selectedTab = document.getElementById(tabId);
+            selectedTab.classList.add('active');
+            if(tabId === 'simulator') {
+                selectedTab.style.display = 'flex';
+                document.getElementById('sidebar').style.display = 'flex';
+            } else {
+                selectedTab.style.display = 'block';
+                document.getElementById('sidebar').style.display = 'none';
+            }
+            if(btn) btn.classList.add('active');
+            updateSimulation(); 
+        }
+
+        const matInput = document.getElementById('material'), targetCdInput = document.getElementById('target_cd'), targetCdNumInput = document.getElementById('target_cd_num');
+        const vaccInput = document.getElementById('vacc'), vbiasInput = document.getElementById('vbias'), iprobeInput = document.getElementById('iprobe'), scanInput = document.getElementById('scan'), magInput = document.getElementById('mag');
+        const canvasImg = document.getElementById('semImage'), ctxImg = canvasImg.getContext('2d'), canvasWave = document.getElementById('waveform'), ctxWave = canvasWave.getContext('2d');
+
+        let g_error = 0, g_currentCD = 50.0, g_baselineYield = 0.5, g_visualGlow = 0, g_noiseLevel = 3, g_mag = 100, g_peakWidth = 10, g_troughRise = 0;
+
+        targetCdInput.addEventListener('input', function() { targetCdNumInput.value = this.value; updateSimulation(); });
+        targetCdNumInput.addEventListener('input', function() { if(this.value >= 5 && this.value <= 100) { targetCdInput.value = this.value; updateSimulation(); }});
+
+        function updateSimulation() {
+            let mat = matInput.value, targetCD = parseFloat(targetCdInput.value), vacc = parseFloat(vaccInput.value), vbias = parseFloat(vbiasInput.value);
+            let iprobe = parseFloat(iprobeInput.value), scan = parseInt(scanInput.value), mag = parseFloat(magInput.value);
+            let EL = Math.max(50, (vacc * 1000) - vbias); 
+            let currentCD = targetCD, chargingSeverity = 0, baselineYield = 0, peakWidth = 10, cdDesc = "", troughRise = 0;
+
+            if (mat === "PR") {
+                document.getElementById('errorToggleText').innerText = "PR 물리적 수축 오차 시각화";
+                baselineYield = 0.8; peakWidth = 20;
+                let damage = (Math.max(0, EL-50)*0.01) + (Math.max(0, iprobe-5)*0.15) + (Math.max(0, scan-1)*0.5);
+                let shrinkage = (damage > 0) ? (targetCD*0.3)*(1-Math.exp(-0.04*damage)) : 0;
+                currentCD = targetCD - shrinkage; g_error = currentCD - targetCD;
+                cdDesc = Math.abs(g_error) < 0.1 ? "이상적 조건으로 수축 억제" : "유기물 붕괴로 수축 발생";
+                chargingSeverity = (iprobe/50.0)*(EL/1000.0)*2.5;
+            } else {
+                document.getElementById('errorToggleText').innerText = "Si 기기적 오차(CD Bias) 시각화";
+                let beamW = 2.0 + (iprobe/15.0) + (EL/1000.0);
+                let scatR = 5.0 + 35.0*(EL/1500.0);
+                let mode2 = Math.max(0, (scatR - targetCD)/scatR);
+                troughRise = mode2; g_error = (EL <= 50 && iprobe <= 5) ? 0 : (beamW*0.8) + (mode2*10.0);
+                currentCD = targetCD + g_error; peakWidth = beamW*2.5; baselineYield = 0.5 + (mode2*0.3);
+                cdDesc = Math.abs(g_error) < 0.1 ? "기기적 CD Bias 0.0nm 억제" : (targetCD <= 15 ? "Mode II 및 피크 병합 오차" : "장비 한계에 의한 CD Bias 발생");
+                chargingSeverity = (EL/2000.0)*(iprobe/50.0)*1.5;
+            }
+
+            document.getElementById('target-cd-val').innerText = targetCD + " nm";
+            document.getElementById('vacc-val').innerText = vacc.toFixed(1) + " kV";
+            document.getElementById('vbias-val').innerText = vbias + " V";
+            document.getElementById('iprobe-val').innerText = iprobe.toFixed(1) + " pA";
+            document.getElementById('scan-val').innerText = scan;
+            document.getElementById('el-out').innerText = EL.toFixed(0) + " eV";
+            let errColor = g_error > 0 ? "var(--error-color)" : (g_error < -0.1 ? "#ff5555" : "#888");
+            document.getElementById('cd-out').innerHTML = `<span>${currentCD.toFixed(1)} nm</span> <span style="color:${errColor}; font-size:0.85em; margin-left:5px;">(오차: ${g_error > 0 ? '+' : ''}${g_error.toFixed(1)} nm)</span>`;
+            document.getElementById('cd-desc').innerText = cdDesc;
+
+            g_currentCD = currentCD; g_baselineYield = baselineYield; g_visualGlow = chargingSeverity*(mag/150.0);
+            g_noiseLevel = 3+(iprobe*0.3); g_mag = mag; g_peakWidth = peakWidth; g_troughRise = troughRise;
+
+            drawSEMImage(currentCD, targetCD, g_visualGlow, g_noiseLevel, mag, mat, document.getElementById('showErrorOverlay').checked);
+            drawWaveform(currentCD, baselineYield, g_visualGlow, g_noiseLevel, mag, peakWidth, troughRise, ctxWave, true, 0);
+        }
+
+        function drawSEMImage(cd, targetCD, glow, noiseLevel, mag, mat, showError) {
+            let width = canvasImg.width, height = canvasImg.height;
+            ctxImg.clearRect(0, 0, width, height);
+            let fov = 1500 * (50.0 / mag), pxS = width / fov, pitch = 100.0, startPhys = -fov/2;
+            ctxImg.fillStyle = (mat === "PR" ? "#282828" : "#181818"); ctxImg.fillRect(0,0,width,height);
+            let startIdx = Math.floor(startPhys / pitch), endIdx = Math.ceil((fov/2)/pitch);
+            for (let i = startIdx; i <= endIdx; i++) {
+                let cp = i*pitch, centerPx = (cp - startPhys)*pxS, cdPx = cd * pxS, startX = centerPx - cdPx/2;
+                ctxImg.fillStyle = (mat === "PR" ? "#505050" : "#404040"); ctxImg.fillRect(startX, 0, cdPx, height);
+                let edgeW = Math.max(1, 4 * pxS), glowInt = Math.min(255, 180+(glow*150)), glowSpread = 2+(glow*10*pxS);
+                ctxImg.shadowColor = 'white'; ctxImg.shadowBlur = glowSpread;
+                ctxImg.fillStyle = `rgb(${glowInt},${glowInt},${glowInt})`;
+                ctxImg.fillRect(startX - edgeW/2, 0, edgeW, height); ctxImg.fillRect(startX + cdPx - edgeW/2, 0, edgeW, height);
+                ctxImg.shadowBlur = 0;
+            }
+            let idata = ctxImg.getImageData(0,0,width,height);
+            for(let i=0; i<idata.data.length; i+=4) { let n = (Math.random()-0.5)*noiseLevel*3; idata.data[i]+=n; idata.data[i+1]+=n; idata.data[i+2]+=n; }
+            ctxImg.putImageData(idata, 0, 0);
+            if (showError) {
+                ctxImg.strokeStyle = 'yellow'; ctxImg.setLineDash([6,6]); ctxImg.lineWidth = 2;
+                for (let i = startIdx; i <= endIdx; i++) {
+                    let cp = i*pitch, centerPx = (cp - startPhys)*pxS, idealPx = targetCD*pxS;
+                    ctxImg.strokeRect(centerPx - idealPx/2, 0, idealPx, height);
+                }
+                ctxImg.setLineDash([]);
+            }
+        }
+
+        function drawWaveform(cd, baselineY, glow, noise, mag, peakW, troughR, targetCtx, drawAxes, yOff) {
+            let width = 600, height = 200;
+            if(drawAxes) {
+                targetCtx.clearRect(0,0,width,height);
+                targetCtx.strokeStyle = 'rgba(255,255,255,0.9)'; targetCtx.lineWidth = 2; targetCtx.beginPath();
+                targetCtx.moveTo(1,0); targetCtx.lineTo(1,height); targetCtx.moveTo(0,height-1); targetCtx.lineTo(width,height-1); targetCtx.stroke();
+            }
+            let fov = 1500*(50.0/mag), pitch = 100.0, startPhys = -fov/2;
+            targetCtx.strokeStyle = '#00ffcc'; targetCtx.lineWidth = 3; targetCtx.shadowColor = '#00ffcc'; targetCtx.shadowBlur = 6; targetCtx.beginPath();
+            let baseH = height-22, baseS = 20*baselineY;
+            for(let x=0; x<=width; x++) {
+                let x_phys = (x/width*fov) + startPhys, signal = 0;
+                let startIdx = Math.floor(startPhys/pitch), endIdx = Math.ceil((fov/2)/pitch);
+                for (let i=startIdx; i<=endIdx; i++) {
+                    let dist = x_phys - i*pitch, peakH = 80+(glow*50), edgeP = cd/2;
+                    let lEdge = peakH*Math.exp(-Math.pow(dist+edgeP, 2)/peakW), rEdge = peakH*Math.exp(-Math.pow(dist-edgeP, 2)/peakW);
+                    let boost = troughR*40*Math.exp(-Math.pow(dist, 2)/(peakW*2));
+                    signal += lEdge + rEdge + ((dist > -edgeP && dist < edgeP) ? (15*baselineY + boost) : 0);
+                }
+                let y = baseH - baseS - signal + (Math.random()-0.5)*noise;
+                if(x===0) targetCtx.moveTo(x, y+yOff); else targetCtx.lineTo(x, y+yOff);
+            }
+            targetCtx.stroke(); targetCtx.shadowBlur = 0;
+        }
+
+        function generateReport() {
+            const overlayChecked = document.getElementById('overlayWaveform').checked;
+            const tempCanvas = document.createElement('canvas'); tempCanvas.width = 600; tempCanvas.height = 400;
+            const tCtx = tempCanvas.getContext('2d');
+            tCtx.drawImage(canvasImg, 0, 0);
+            if (overlayChecked) drawWaveform(g_currentCD, g_baselineYield, g_visualGlow, g_noiseLevel, g_mag, g_peakWidth, g_troughRise, tCtx, false, 100);
+            const imgDataUrl = tempCanvas.toDataURL();
+            const matSelect = document.getElementById('material');
+            const reportHtml = `
+                <div style="display: flex; gap: 20px; margin-bottom: 25px; flex-wrap: wrap;">
+                    <div style="flex: 1; background: #111; padding: 20px; border-radius: 8px; border: 1px solid #333;">
+                        <h4 style="margin-top: 0; color: #fff; border-bottom: 1px solid #444; padding-bottom: 10px;">Acquisition Parameters</h4>
+                        <ul style="list-style: none; padding: 0; margin: 0; color: #aaa; font-size: 0.95rem; line-height: 1.8;">
+                            <li><strong>Material:</strong> ${matSelect.options[matSelect.selectedIndex].text}</li>
+                            <li><strong>Target CD:</strong> ${document.getElementById('target_cd').value} nm</li>
+                            <li><strong>V_acc:</strong> ${document.getElementById('vacc').value} kV</li>
+                            <li><strong>V_bias:</strong> ${document.getElementById('vbias').value} V</li>
+                            <li><strong>Probe Current:</strong> ${document.getElementById('iprobe').value} pA</li>
+                            <li><strong>Scan Count:</strong> ${document.getElementById('scan').value} 회</li>
+                            <li><strong>Magnification:</strong> ${document.getElementById('mag').value}x</li>
+                        </ul>
+                    </div>
+                    <div style="flex: 1; background: #111; padding: 20px; border-radius: 8px; border: 1px solid #333;">
+                        <h4 style="margin-top: 0; color: #fff; border-bottom: 1px solid #444; padding-bottom: 10px;">Measurement Results</h4>
+                        <ul style="list-style: none; padding: 0; margin: 0; color: #aaa; font-size: 0.95rem; line-height: 1.8;">
+                            <li><strong>Landing Energy:</strong> <span style="color:var(--accent); font-weight:bold;">${document.getElementById('el-out').innerText}</span></li>
+                            <li><strong>Measured CD:</strong> <span style="font-weight:bold;">${document.getElementById('cd-out').innerHTML}</span></li>
+                        </ul>
+                    </div>
+                </div>
+                <div style="text-align: center; background: #000; padding: 15px; border-radius: 8px; border: 1px solid #333;"><img src="${imgDataUrl}" style="width: 100%; border-radius: 6px;"></div>
+            `;
+            document.getElementById('reportData').innerHTML = reportHtml;
+            document.getElementById('reportModal').style.display = 'flex';
+        }
+        function closeReport() { document.getElementById('reportModal').style.display = 'none'; }
+        
+        [matInput, targetCdInput, vaccInput, vbiasInput, iprobeInput, scanInput, magInput].forEach(i => i.addEventListener('input', updateSimulation));
+    </script>
+</body>
+</html>
